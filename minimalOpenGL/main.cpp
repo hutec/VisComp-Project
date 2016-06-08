@@ -60,6 +60,7 @@
 
 #include "matrix.h"
 #include "minimalOpenGL.h"
+#include <nanogui/nanogui.h>
 
 #ifdef _VR
 #   include "minimalOpenVR.h"
@@ -74,6 +75,22 @@ GLFWwindow* window = nullptr;
 #ifndef Shape
 #   define Shape Cube
 #endif
+
+
+void init_gui()
+{
+	nanogui::init();
+}
+
+void render_gui()
+{
+	nanogui::mainloop();
+}
+
+void shutdown_gui()
+{
+	nanogui::shutdown();
+}
 
 
 int main(const int argc, const char* argv[]) {
@@ -92,7 +109,27 @@ int main(const int argc, const char* argv[]) {
     const int windowHeight = 720;
     const int windowWidth = (framebufferWidth * windowHeight) / framebufferHeight;
 
-    window = initOpenGL(windowWidth, windowHeight, "minimalOpenGL");
+    //window = initOpenGL(windowWidth, windowHeight, "minimalOpenGL");
+	init_gui();
+	nanogui::Screen *screen = new nanogui::Screen(Eigen::Vector2i(500, 700), "NanoGUI test");
+
+	bool bvar = true;
+	std::string strval = "A string";
+	bool enabled = true;
+	nanogui::FormHelper *gui = new nanogui::FormHelper(screen);
+	nanogui::ref<nanogui::Window> window_nanogui = gui->addWindow(Eigen::Vector2i(10, 10), "Form helper example");
+	gui->addGroup("Basic types");
+	gui->addVariable("bool", bvar);
+	gui->addVariable("string", strval);
+
+	screen->setVisible(true);
+	screen->performLayout();
+	window_nanogui->center();
+
+	window = screen->glfwWindow();
+
+	// Bind a single global vertex array (done this way since OpenGL 3)
+	{ GLuint vao; glGenVertexArrays(1, &vao); glBindVertexArray(vao); }
         
     Vector3 bodyTranslation(0.0f, 1.6f, 5.0f);
     Vector3 bodyRotation;
@@ -271,6 +308,8 @@ int main(const int argc, const char* argv[]) {
 
         const Matrix4x4& headToWorldMatrix = bodyToWorldMatrix * headToBodyMatrix;
 
+
+
         for (int eye = 0; eye < numEyes; ++eye) {
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer[eye]);
             glViewport(0, 0, framebufferWidth, framebufferHeight);
@@ -364,6 +403,8 @@ int main(const int argc, const char* argv[]) {
             vr::VRCompositor()->PostPresentHandoff();
 #       endif
 
+
+
         // Mirror to the window
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, GL_NONE);
         glViewport(0, 0, windowWidth, windowHeight);
@@ -371,9 +412,12 @@ int main(const int argc, const char* argv[]) {
         glBlitFramebuffer(0, 0, framebufferWidth, framebufferHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
         glBindFramebuffer(GL_READ_FRAMEBUFFER, GL_NONE);
 
-        // Display what has been drawn on the main window
-        glfwSwapBuffers(window);
 
+		render_gui();
+
+        // Display what has been drawn on the main window
+        //glfwSwapBuffers(window);
+/*
         // Check for events
         glfwPollEvents();
 
@@ -409,7 +453,7 @@ int main(const int argc, const char* argv[]) {
         } else {
             inDrag = false;
         }
-
+*/
         ++timer;
     }
 
@@ -418,6 +462,8 @@ int main(const int argc, const char* argv[]) {
             vr::VR_Shutdown();
         }
 #   endif
+
+	shutdown_gui();
 
     // Close the GL context and release all resources
     glfwTerminate();
