@@ -60,13 +60,20 @@
 
 #include "matrix.h"
 #include "minimalOpenGL.h"
-#include <nanogui/nanogui.h>
+#include "nanovg.h"
+#define NANOVG_GL3_IMPLEMENTATION
+#include "nanovg_gl.h"
+#include "demo.h"
+#include "perf.h"
 
 #ifdef _VR
 #   include "minimalOpenVR.h"
 #endif
 
 GLFWwindow* window = nullptr;
+DemoData data;
+bool data_loaded = false;
+NVGcontext* vg = NULL;
 
 #ifdef _VR
     vr::IVRSystem* hmd = nullptr;
@@ -79,17 +86,49 @@ GLFWwindow* window = nullptr;
 
 void init_gui()
 {
-	nanogui::init();
+	vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG);
+
+	if (vg == NULL) {
+		printf("Could not init nanovg.\n");
+		return;
+	}
+	if (loadDemoData(vg, &data) == -1)
+	{
+		printf("Could notload demo data.\n");
+		return;
+	}
+	data_loaded = true;
 }
 
 void render_gui()
 {
-	nanogui::mainloop();
+	if (data_loaded)
+	{
+		double mx, my;
+		int winWidth, winHeight, fbWidth, fbHeight;
+		int blowup = 0;
+
+		glfwGetCursorPos(window, &mx, &my);
+		glfwGetWindowSize(window, &winWidth, &winHeight);
+		glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+		// Calculate pixel ration for hi-dpi devices.
+		float pxRatio = (float)fbWidth / (float)winWidth;
+
+		nvgBeginFrame(vg, winWidth, winHeight, pxRatio);
+
+		renderDemo(vg, mx, my, winWidth, winHeight, 0.016, blowup, &data);
+
+
+		nvgEndFrame(vg);
+	}
+
 }
+
 
 void shutdown_gui()
 {
-	nanogui::shutdown();
+	if(data_loaded) freeDemoData(vg, &data);
+	nvgDeleteGL3(vg);
 }
 
 
@@ -109,24 +148,9 @@ int main(const int argc, const char* argv[]) {
     const int windowHeight = 720;
     const int windowWidth = (framebufferWidth * windowHeight) / framebufferHeight;
 
-    //window = initOpenGL(windowWidth, windowHeight, "minimalOpenGL");
-	init_gui();
-	nanogui::Screen *screen = new nanogui::Screen(Eigen::Vector2i(500, 700), "NanoGUI test");
+    window = initOpenGL(windowWidth, windowHeight, "minimalOpenGL");
+	//init_gui();
 
-	bool bvar = true;
-	std::string strval = "A string";
-	bool enabled = true;
-	nanogui::FormHelper *gui = new nanogui::FormHelper(screen);
-	nanogui::ref<nanogui::Window> window_nanogui = gui->addWindow(Eigen::Vector2i(10, 10), "Form helper example");
-	gui->addGroup("Basic types");
-	gui->addVariable("bool", bvar);
-	gui->addVariable("string", strval);
-
-	screen->setVisible(true);
-	screen->performLayout();
-	window_nanogui->center();
-
-	window = screen->glfwWindow();
 
 	// Bind a single global vertex array (done this way since OpenGL 3)
 	{ GLuint vao; glGenVertexArrays(1, &vao); glBindVertexArray(vao); }
@@ -395,6 +419,9 @@ int main(const int argc, const char* argv[]) {
                 vr::VRCompositor()->Submit(vr::EVREye(eye), &tex);
             }
 #           endif
+
+
+			//render_gui();
         } // for each eye
 
         ////////////////////////////////////////////////////////////////////////
@@ -411,9 +438,6 @@ int main(const int argc, const char* argv[]) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glBlitFramebuffer(0, 0, framebufferWidth, framebufferHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
         glBindFramebuffer(GL_READ_FRAMEBUFFER, GL_NONE);
-
-
-		render_gui();
 
         // Display what has been drawn on the main window
         //glfwSwapBuffers(window);
