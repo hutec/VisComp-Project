@@ -75,17 +75,26 @@ GLFWwindow* window = nullptr;
 #   define Shape Cube
 #endif
 
-void processFrame(const Leap::Frame& frame) {
+int processFrame(const Leap::Frame& frame) {
 	Leap::GestureList gl = frame.gestures();
 	for (Leap::Gesture gesture : gl) {
 		if (gesture.type() == Leap::SwipeGesture::classType()) {
 			Leap::SwipeGesture swipe = Leap::SwipeGesture(gesture);
-			if (swipe.direction().x > 0)
+			if (swipe.direction().x > 0) {
 				std::cout << "Left swipe" << std::endl;
-			else
+				return -1;
+			} else {
 				std::cout << "Right swipe" << std::endl;
+				return 1;
+			}
 		}
 	}
+	return 0;
+}
+
+Leap::Vector processMovement(const Leap::Frame& frame) {
+	Leap::Hand hand = frame.hands().rightmost();
+	return hand.palmVelocity();
 }
 
 int main(const int argc, const char* argv[]) {
@@ -95,6 +104,7 @@ int main(const int argc, const char* argv[]) {
 	//Leap Stuff
 	Leap::Controller controller;
 	controller.enableGesture(Leap::Gesture::TYPE_SWIPE);
+	std::cout << "Leap controller connected" << std::endl;
 	// End Leap Stuff
 
     uint32_t framebufferWidth = 1280, framebufferHeight = 720;
@@ -267,7 +277,10 @@ int main(const int argc, const char* argv[]) {
     while (! glfwWindowShouldClose(window)) {
         assert(glGetError() == GL_NONE);
 
-		processFrame(controller.frame());
+		//int movement = processFrame(controller.frame());
+
+		// Divide by 10000 for normalization
+		Leap::Vector palmVelocity = processMovement(controller.frame());
 
         const float nearPlaneZ = -0.1f;
         const float farPlaneZ = -100.0f;
@@ -401,8 +414,13 @@ int main(const int argc, const char* argv[]) {
             glfwSetWindowShouldClose(window, 1);
         }
 
+		// Leap movement
+		bodyTranslation += Vector3(headToWorldMatrix * Vector4(palmVelocity.x / 10000, 0, 0, 0));
+		bodyTranslation += Vector3(headToWorldMatrix * Vector4(0, palmVelocity.y / 10000, 0, 0));
+		bodyTranslation += Vector3(headToWorldMatrix * Vector4(0, 0, palmVelocity.z / 10000, 0));
+
         // WASD keyboard movement
-        const float cameraMoveSpeed = 0.01f;
+        //const float cameraMoveSpeed = 0.01f;
         if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_W)) { bodyTranslation += Vector3(headToWorldMatrix * Vector4(0, 0, -cameraMoveSpeed, 0)); }
         if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_S)) { bodyTranslation += Vector3(headToWorldMatrix * Vector4(0, 0, +cameraMoveSpeed, 0)); }
         if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_A)) { bodyTranslation += Vector3(headToWorldMatrix * Vector4(-cameraMoveSpeed, 0, 0, 0)); }
