@@ -55,11 +55,11 @@
 // To switch the box to a teapot, uncomment the following two lines
 //#include "teapot.h"
 //#define Shape Teapot
-
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "matrix.h"
 #include "minimalOpenGL.h"
+#include "Leap.h"
 
 #ifdef _VR
 #   include "minimalOpenVR.h"
@@ -75,10 +75,27 @@ GLFWwindow* window = nullptr;
 #   define Shape Cube
 #endif
 
+void processFrame(const Leap::Frame& frame) {
+	Leap::GestureList gl = frame.gestures();
+	for (Leap::Gesture gesture : gl) {
+		if (gesture.type() == Leap::SwipeGesture::classType()) {
+			Leap::SwipeGesture swipe = Leap::SwipeGesture(gesture);
+			if (swipe.direction().x > 0)
+				std::cout << "Left swipe" << std::endl;
+			else
+				std::cout << "Right swipe" << std::endl;
+		}
+	}
+}
 
 int main(const int argc, const char* argv[]) {
     std::cout << "Minimal OpenGL 4.1 Example by Morgan McGuire\n\nW, A, S, D, C, Z keys to translate\nMouse click and drag to rotate\nESC to quit\n\n";
     std::cout << std::fixed;
+
+	//Leap Stuff
+	Leap::Controller controller;
+	controller.enableGesture(Leap::Gesture::TYPE_SWIPE);
+	// End Leap Stuff
 
     uint32_t framebufferWidth = 1280, framebufferHeight = 720;
 #   ifdef _VR
@@ -249,6 +266,8 @@ int main(const int argc, const char* argv[]) {
     int timer = 0;
     while (! glfwWindowShouldClose(window)) {
         assert(glGetError() == GL_NONE);
+
+		processFrame(controller.frame());
 
         const float nearPlaneZ = -0.1f;
         const float farPlaneZ = -100.0f;
