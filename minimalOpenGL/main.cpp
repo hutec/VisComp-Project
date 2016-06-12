@@ -94,7 +94,17 @@ int processFrame(const Leap::Frame& frame) {
 
 Leap::Vector processMovement(const Leap::Frame& frame) {
 	Leap::Hand hand = frame.hands().rightmost();
+	Leap::PointableList pointables = hand.pointables().extended();
+	if (pointables.isEmpty() && !frame.hands().isEmpty()) {
+		std::cout << "Hand is closed" << std::endl;
+	}
 	return hand.palmVelocity();
+}
+
+bool isHandClosed(const Leap::Frame& frame) {
+	Leap::Hand hand = frame.hands().rightmost();
+	Leap::PointableList pointables = hand.pointables().extended();
+	return pointables.isEmpty() && !frame.hands().isEmpty();
 }
 
 int main(const int argc, const char* argv[]) {
@@ -415,9 +425,13 @@ int main(const int argc, const char* argv[]) {
         }
 
 		// Leap movement
-		bodyTranslation += Vector3(headToWorldMatrix * Vector4(palmVelocity.x / 10000, 0, 0, 0));
-		bodyTranslation += Vector3(headToWorldMatrix * Vector4(0, palmVelocity.y / 10000, 0, 0));
-		bodyTranslation += Vector3(headToWorldMatrix * Vector4(0, 0, palmVelocity.z / 10000, 0));
+		if (!isHandClosed(controller.frame()) && !(GLFW_PRESS == glfwGetKey(window, GLFW_KEY_H))) {
+			bodyTranslation += Vector3(headToWorldMatrix * Vector4(palmVelocity.x / 10000, 0, 0, 0));
+			bodyTranslation += Vector3(headToWorldMatrix * Vector4(0, palmVelocity.y / 10000, 0, 0));
+			bodyTranslation += Vector3(headToWorldMatrix * Vector4(0, 0, palmVelocity.z / 10000, 0));
+		}
+
+		const float cameraMoveSpeed = 0.01f;
 
         // WASD keyboard movement
         //const float cameraMoveSpeed = 0.01f;
@@ -446,6 +460,11 @@ int main(const int argc, const char* argv[]) {
         } else {
             inDrag = false;
         }
+
+		if (isHandClosed(controller.frame()) && !(GLFW_PRESS == glfwGetKey(window, GLFW_KEY_H))) {
+			bodyRotation.x += (palmVelocity.y / 100) * cameraTurnSpeed;
+			bodyRotation.y -= (palmVelocity.x / 100) * cameraTurnSpeed;
+		}
 
         ++timer;
     }
