@@ -50,7 +50,7 @@
  */
 
 // Uncomment to add VR support
-//#define _VR
+#define _VR
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -117,6 +117,7 @@ int main(const int argc, const char* argv[]) {
 	unsigned char cubeColor[] = { 255, 0, 0, 128 }; // Model color (32bits RGBA)
 													// Create a tweak bar
 	bar = TwNewBar("TweakBar");
+	TwDefine(" TweakBar position='250 20' "); // move bar to position (200, 40)
 	TwDefine(" TweakBar alpha=255 "); // opaque bar
 	TwDefine(" GLOBAL fontsize=3 "); // use large font
 	TwDefine(" GLOBAL fontstyle=default "); // use fixed-width font
@@ -238,6 +239,9 @@ int main(const int argc, const char* argv[]) {
 			pMesh->render(viewProjectionMatrix);
 
 
+			// Draw the Anttweakbar UI
+			TwDraw();
+
 #           ifdef _VR
             {
                 const vr::Texture_t tex = { reinterpret_cast<void*>(intptr_t(colorRenderTarget[eye])), vr::API_OpenGL, vr::ColorSpace_Gamma };
@@ -258,9 +262,7 @@ int main(const int argc, const char* argv[]) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glBlitFramebuffer(0, 0, framebufferWidth, framebufferHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
         glBindFramebuffer(GL_READ_FRAMEBUFFER, GL_NONE);
-		
-		// Draw the Anttweakbar UI
-		TwDraw();
+
 
         // Display what has been drawn on the main window
         glfwSwapBuffers(window);
