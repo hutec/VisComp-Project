@@ -16,10 +16,31 @@
     <Filter Include="Shader Files">
       <UniqueIdentifier>{8f72a8bb-0466-40f9-9532-2e83bba9d7b7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="helper">
+      <UniqueIdentifier>{5eea280d-695a-4b5d-a7c4-97e4a38b8890}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="helper\GLCommon.cpp">
+      <Filter>helper</Filter>
+    </ClCompile>
+    <ClCompile Include="helper\OGLTexture.cpp">
+      <Filter>helper</Filter>
+    </ClCompile>
+    <ClCompile Include="helper\rgbe.cpp">
+      <Filter>helper</Filter>
+    </ClCompile>
+    <ClCompile Include="helper\wavefront_obj_loader\GLMmodel.cpp">
+      <Filter>helper</Filter>
+    </ClCompile>
+    <ClCompile Include="helper\stbi_image\stb_image.c">
+      <Filter>helper</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -32,8 +53,26 @@
     <ClInclude Include="minimalOpenVR.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="teapot.h">
+    <ClInclude Include="MeshComponent.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="helper\GLCommon.h">
+      <Filter>helper</Filter>
+    </ClInclude>
+    <ClInclude Include="helper\MatrixConvertions.h">
+      <Filter>helper</Filter>
+    </ClInclude>
+    <ClInclude Include="helper\OGLTexture.h">
+      <Filter>helper</Filter>
+    </ClInclude>
+    <ClInclude Include="helper\rgbe.h">
+      <Filter>helper</Filter>
+    </ClInclude>
+    <ClInclude Include="helper\wavefront_obj_loader\GLMmodel.h">
+      <Filter>helper</Filter>
+    </ClInclude>
+    <ClInclude Include="helper\stbi_image\stb_image.h">
+      <Filter>helper</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

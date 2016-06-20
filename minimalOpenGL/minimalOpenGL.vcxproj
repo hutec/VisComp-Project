@@ -76,8 +76,8 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
     <TargetName>$(ProjectName)d</TargetName>
-    <IncludePath>D:\git_repos\openvr\headers;E:\Libraries\glew-1.13.0\include;E:\Libraries\glfw-3.1.bin.WIN64\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\git_repos\openvr\lib\win64;E:\Libraries\glew-1.13.0\lib\Release\x64;E:\Libraries\glfw-3.1.bin.WIN64\lib-vc2013;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\git_repos\VisComp-Project\minimalOpenGL\AntTweakBar\include;D:\git_repos\VisComp-Project\minimalOpenGL\glm;D:\git_repos\openvr\headers;E:\Libraries\glew-1.13.0\include;E:\Libraries\glfw-3.1.bin.WIN64\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\git_repos\VisComp-Project\minimalOpenGL\AntTweakBar\lib;D:\git_repos\openvr\lib\win64;E:\Libraries\glew-1.13.0\lib\Release\x64;E:\Libraries\glfw-3.1.bin.WIN64\lib-vc2013;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -114,7 +114,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalOptions>legacy_stdio_definitions.lib /NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>legacy_stdio_definitions.lib anttweakbar64.lib glu32.lib /NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -154,13 +154,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="helper\GLCommon.cpp" />
+    <ClCompile Include="helper\OGLTexture.cpp" />
+    <ClCompile Include="helper\rgbe.cpp" />
+    <ClCompile Include="helper\stbi_image\stb_image.c" />
+    <ClCompile Include="helper\wavefront_obj_loader\GLMmodel.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MeshComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="helper\GLCommon.h" />
+    <ClInclude Include="helper\MatrixConvertions.h" />
+    <ClInclude Include="helper\OGLTexture.h" />
+    <ClInclude Include="helper\rgbe.h" />
+    <ClInclude Include="helper\stbi_image\stb_image.h" />
+    <ClInclude Include="helper\wavefront_obj_loader\GLMmodel.h" />
     <ClInclude Include="matrix.h" />
+    <ClInclude Include="MeshComponent.h" />
     <ClInclude Include="minimalOpenGL.h" />
     <ClInclude Include="minimalOpenVR.h" />
-    <ClInclude Include="teapot.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="min.pix" />

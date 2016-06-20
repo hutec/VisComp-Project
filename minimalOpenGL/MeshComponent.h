@@ -1,11 +1,9 @@
 #pragma once
 #include "helper/wavefront_obj_loader/GLMmodel.h"
 #include "helper/OGLTexture.h"
-#include "GL/glew.h"
-#include <GLFW/glfw3.h>
 #include <glm.hpp>
 #include <iostream>
-#include "helper\GLCommon.h"
+#include "helper/GLCommon.h"
 
 class CMeshComponent
 {
