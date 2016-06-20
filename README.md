@@ -8,10 +8,12 @@ https://developer.leapmotion.com/documentation/cpp/devguide/Project_Setup.html
 
 ## Errors
 If Leap.h throws an error, surround the throwing code with
-`#ifndef PI
+```
+#ifndef IPgo
 
 //Code here
 
-#endif`
+#endif
+```
 
 
