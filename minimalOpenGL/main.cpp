@@ -50,7 +50,7 @@
  */
 
 // Uncomment to add VR support
-#define _VR
+//#define _VR
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -215,6 +215,10 @@ int main(const int argc, const char* argv[]) {
             Matrix4x4::pitch(bodyRotation.x);
 
         const Matrix4x4& headToWorldMatrix = bodyToWorldMatrix * headToBodyMatrix;
+
+		// WARNING! dt not yet measured. For the moment use fixed elapsed time since last frame
+		// pMesh->update(dt)
+		pMesh->update(0.01f);
 		
 		// Draw the scene twice; for both eyes
         for (int eye = 0; eye < numEyes; ++eye) 
@@ -234,8 +238,8 @@ int main(const int argc, const char* argv[]) {
             drawSky(framebufferWidth, framebufferHeight, nearPlaneZ, farPlaneZ, cameraToWorldMatrix.data, projectionMatrix[eye].inverse().data, &light.x);
 
 			// Draw the mesh
-			const Matrix4x4 modelViewProjectionMatrix = projectionMatrix[eye] * cameraToWorldMatrix.inverse();
-			glm::mat4 viewProjectionMatrix = Matrix4x4ToGLM(modelViewProjectionMatrix);
+			const Matrix4x4 viewProjectionMatrix4x4 = projectionMatrix[eye] * cameraToWorldMatrix.inverse();
+			glm::mat4 viewProjectionMatrix = Matrix4x4ToGLM(viewProjectionMatrix4x4);
 			pMesh->render(viewProjectionMatrix);
 
 

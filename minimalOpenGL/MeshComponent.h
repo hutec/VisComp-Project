@@ -1,3 +1,10 @@
+////////////////////////////////////////////////////////////
+// 
+//  Class for holding the resources needed to draw 
+//  a wavefront .obj mesh. 
+//  Author: Kai Braun, 2016
+// 
+
 #pragma once
 #include "helper/wavefront_obj_loader/GLMmodel.h"
 #include "helper/OGLTexture.h"
@@ -11,9 +18,16 @@ public:
 	CMeshComponent();
 	~CMeshComponent();
 
+	/* Loads the model, shader and textures */
 	void init();
+
+	/* Updates the model transformation matrix */
 	void update(float elapsedTime);
+
+	/* Renders the object */
 	void render(glm::mat4 view_projection);
+
+	/* Releases the allocated buffers */
 	void cleanup();
 
 private:

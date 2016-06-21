@@ -31,10 +31,11 @@ void CMeshComponent::init()
 
 	filename = (char*)"assets/generator_small_mod.obj";
 	model = glmReadOBJ(filename);
+	
+	// Scale object to unit size
 	glmUnitize(model);
 
 	isFullyInitialized &= initVertexBuffer();
-
 	isFullyInitialized &= tDiffuse.load((char*)"assets/generator_diffuse.jpg");
 
 }
@@ -231,7 +232,8 @@ bool CMeshComponent::initVertexBuffer()
 
 void CMeshComponent::update(float elapsedTime)
 {
-
+	float rotation_speed = glm::radians(10.0f);
+	model_transform *= glm::rotate(rotation_speed * elapsedTime, glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
 void CMeshComponent::render(glm::mat4 view_projection)
