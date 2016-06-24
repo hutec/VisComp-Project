@@ -59,6 +59,8 @@
 #include <AntTweakBar.h>
 #include "MeshComponent.h"
 #include "helper\MatrixConvertions.h"
+#include "Leap.h"
+#include "LeapHandler.h"
 
 #ifdef _VR
 #   include "minimalOpenVR.h"
@@ -85,6 +87,7 @@ inline void TwEventMouseWheelGLFW3(GLFWwindow* window, double xoffset, double yo
 inline void TwEventKeyGLFW3(GLFWwindow* window, int key, int scancode, int action, int mods) { TwEventKeyGLFW(key, action); }
 
 inline void TwEventCharGLFW3(GLFWwindow* window, int codepoint) { TwEventCharGLFW(codepoint, GLFW_PRESS); }
+
 
 int main(const int argc, const char* argv[]) {
     std::cout << "Minimal OpenGL 4.1 Example by Morgan McGuire\n\nW, A, S, D, C, Z keys to translate\nMouse click and drag to rotate\nESC to quit\n\n";
@@ -153,6 +156,8 @@ int main(const int argc, const char* argv[]) {
     Vector3 bodyTranslation(0.0f, 1.6f, 5.0f);
     Vector3 bodyRotation;
 
+	Leap::Controller controller;
+
     //////////////////////////////////////////////////////////////////////
     // Allocate the frame buffer. This code allocates one framebuffer per eye.
     // That requires more GPU memory, but is useful when performing temporal 
@@ -218,8 +223,11 @@ int main(const int argc, const char* argv[]) {
 
 		// WARNING! dt not yet measured. For the moment use fixed elapsed time since last frame
 		// pMesh->update(dt)
-		pMesh->update(0.01f);
-		
+		//pMesh->update(0.01f);
+
+		Leap::Vector palmVelocity = getPalmVelocity(controller.frame());
+		pMesh->rotate(glm::vec3(palmVelocity.x, palmVelocity.y, palmVelocity.z));
+
 		// Draw the scene twice; for both eyes
         for (int eye = 0; eye < numEyes; ++eye) 
 		{

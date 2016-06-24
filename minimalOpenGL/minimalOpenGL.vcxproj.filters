@@ -42,6 +42,9 @@
     <ClCompile Include="helper\stbi_image\stb_image.c">
       <Filter>helper</Filter>
     </ClCompile>
+    <ClCompile Include="LeapHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="minimalOpenGL.h">
@@ -73,6 +76,9 @@
     </ClInclude>
     <ClInclude Include="helper\stbi_image\stb_image.h">
       <Filter>helper</Filter>
+    </ClInclude>
+    <ClInclude Include="LeapHandler.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -24,6 +24,9 @@ public:
 	/* Updates the model transformation matrix */
 	void update(float elapsedTime);
 
+	/* Rotate for given angles*/
+	void rotate(glm::vec3 rotation);
+
 	/* Renders the object */
 	void render(glm::mat4 view_projection);
 

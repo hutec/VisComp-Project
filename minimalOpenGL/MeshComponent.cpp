@@ -232,8 +232,17 @@ bool CMeshComponent::initVertexBuffer()
 
 void CMeshComponent::update(float elapsedTime)
 {
-	float rotation_speed = glm::radians(10.0f);
+	float rotation_speed = glm::radians(1.0f);
 	model_transform *= glm::rotate(rotation_speed * elapsedTime, glm::vec3(0.0f, 1.0f, 0.0f));
+}
+
+void CMeshComponent::rotate(glm::vec3 rotation)
+{
+
+	rotation = rotation / glm::vec3(100000);
+	model_transform *= glm::rotate(rotation.x, glm::vec3(0.0f, 1.0f, 0.0f));
+	model_transform *= glm::rotate(rotation.y, glm::vec3(1.0f, 0.0f, 0.0f));
+	//model_transform *= glm::rotate(rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
 }
 
 void CMeshComponent::render(glm::mat4 view_projection)
