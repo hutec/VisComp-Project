@@ -112,7 +112,8 @@ int main(const int argc, const char* argv[]) {
 	// Initialize AntTweakBar
 	TwInit(TW_OPENGL_CORE, NULL);
 
-	double time = 0, dt;// Current time and enlapsed time
+	double lastTime = glfwGetTime();
+	float dt = 0.0016f;
 	double turn = 0;    // Model turn counter
 	double speed = 0.3; // Model rotation speed
 	int wire = 0;       // Draw model in wireframe?
@@ -135,7 +136,7 @@ int main(const int argc, const char* argv[]) {
 		" label='Wireframe mode' key=w help='Toggle wireframe display mode.' ");
 
 	// Add 'time' to 'bar': it is a read-only (RO) variable of type TW_TYPE_DOUBLE, with 1 precision digit
-	TwAddVarRO(bar, "time", TW_TYPE_DOUBLE, &time, " label='Time' precision=1 help='Time (in seconds).' ");
+	TwAddVarRO(bar, "time", TW_TYPE_DOUBLE, &turn, " label='Time' precision=1 help='Time (in seconds).' ");
 
 	// Add 'bgColor' to 'bar': it is a modifable variable of type TW_TYPE_COLOR3F (3 floats color)
 	TwAddVarRW(bar, "bgColor", TW_TYPE_COLOR3F, &bgColor, " label='Background color' ");
@@ -151,7 +152,12 @@ int main(const int argc, const char* argv[]) {
 	glfwSetCharCallback(window, (GLFWcharfun)TwEventCharGLFW3);
 
 	pMesh = new CMeshComponent();
-	pMesh->init();
+	pMesh->init(
+		"assets/quad.obj", 
+		"assets/hello.png", 
+		"simple_model.frag" , 
+		"simple_model.vert"
+		);
         
     Vector3 bodyTranslation(0.0f, 1.6f, 5.0f);
     Vector3 bodyRotation;
@@ -195,7 +201,6 @@ int main(const int argc, const char* argv[]) {
 #   endif
 
     // Main loop:
-    int timer = 0;
     while (! glfwWindowShouldClose(window)) 
 	{
         assert(glGetError() == GL_NONE);
@@ -221,12 +226,13 @@ int main(const int argc, const char* argv[]) {
 
         const Matrix4x4& headToWorldMatrix = bodyToWorldMatrix * headToBodyMatrix;
 
-		// WARNING! dt not yet measured. For the moment use fixed elapsed time since last frame
-		// pMesh->update(dt)
-		//pMesh->update(0.01f);
+
 
 		Leap::Vector palmVelocity = getPalmVelocity(controller.frame());
 		pMesh->rotate(glm::vec3(palmVelocity.x, palmVelocity.y, palmVelocity.z));
+
+		// update the scene
+		pMesh->update(dt);
 
 		// Draw the scene twice; for both eyes
         for (int eye = 0; eye < numEyes; ++eye) 
@@ -315,7 +321,10 @@ int main(const int argc, const char* argv[]) {
             inDrag = false;
         }
 
-        ++timer;
+		/* Timer and fps */
+		double currentTime = glfwGetTime();
+		dt = (float)(currentTime - lastTime);
+		lastTime = currentTime;
     }
 
 #   ifdef _VR

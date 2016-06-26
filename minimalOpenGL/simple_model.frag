@@ -8,5 +8,5 @@ out vec4 frag_colour;
 
 void main () {
 
-  frag_colour = texture(diffuse, texcoords); //vec4(texcoords, 0.0f, 1.0f); //texture (cube_texture, texcoords);
+  frag_colour = texture(diffuse, texcoords);
 }

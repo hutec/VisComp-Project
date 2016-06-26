@@ -25,34 +25,36 @@ CMeshComponent::~CMeshComponent()
 	cleanup();
 }
 
-void CMeshComponent::init()
+void CMeshComponent::init(char* obj_path, char* diffuse_path, char* frag_shader_path, char* vert_shader_path)
 {
-	isFullyInitialized = loadShader();
+	isFullyInitialized = loadShader(frag_shader_path, vert_shader_path);
 
-	filename = (char*)"assets/generator_small_mod.obj";
+	filename = obj_path;
+	//filename = (char*)"assets/quad.obj";
 	model = glmReadOBJ(filename);
 	
 	// Scale object to unit size
 	glmUnitize(model);
 
 	isFullyInitialized &= initVertexBuffer();
-	isFullyInitialized &= tDiffuse.load((char*)"assets/generator_diffuse.jpg");
+	isFullyInitialized &= tDiffuse.load(diffuse_path);
+	//isFullyInitialized &= tDiffuse.load((char*)"assets/generator_diffuse.jpg");
 
 }
 
-bool CMeshComponent::loadShader()
+bool CMeshComponent::loadShader(char* frag_shader_path, char* vert_shader_path)
 {
 	model_vert_shader = glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB);
 	model_frag_shader = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
 
-	if (!CreateShaderFromFile("simple_model.vert", model_vert_shader))
+	if (!CreateShaderFromFile(vert_shader_path, model_vert_shader))
 	{
 		std::cout << "Loading simple_model.vert failed " << std::endl;
 		return false;
 	}
 
 
-	if (!CreateShaderFromFile("simple_model.frag", model_frag_shader))
+	if (!CreateShaderFromFile(frag_shader_path, model_frag_shader))
 	{
 		std::cout << "Loading simple_model.frag failed " << std::endl;
 		return false;
@@ -232,7 +234,8 @@ bool CMeshComponent::initVertexBuffer()
 
 void CMeshComponent::update(float elapsedTime)
 {
-	float rotation_speed = glm::radians(1.0f);
+	// rotate the mesh with a speed of rotation_speed° per second
+	float rotation_speed = glm::radians(5.0f);
 	model_transform *= glm::rotate(rotation_speed * elapsedTime, glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
@@ -259,6 +262,8 @@ void CMeshComponent::render(glm::mat4 view_projection)
 	// Set state machine parameters
 	glDepthMask(GL_TRUE);
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// Set shader and uniforms
 	glUseProgram(modelProgram);
@@ -280,4 +285,5 @@ void CMeshComponent::render(glm::mat4 view_projection)
 	glUseProgram(0);
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
+	glDisable(GL_BLEND);
 }

@@ -19,7 +19,7 @@ public:
 	~CMeshComponent();
 
 	/* Loads the model, shader and textures */
-	void init();
+	void init(char* obj_path, char* diffuse_path, char* frag_shader_path, char* vert_shader_path);
 
 	/* Updates the model transformation matrix */
 	void update(float elapsedTime);
@@ -35,7 +35,7 @@ public:
 
 private:
 	bool initVertexBuffer();
-	bool loadShader();
+	bool loadShader(char* frag_shader_path, char* vert_shader_path);
 
 private:
 	GLMmodel	*model;
