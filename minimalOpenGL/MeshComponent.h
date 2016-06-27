@@ -11,6 +11,7 @@
 #include <glm.hpp>
 #include <iostream>
 #include "helper/GLCommon.h"
+#include <algorithm>
 
 class CMeshComponent
 {
@@ -26,6 +27,9 @@ public:
 
 	/* Rotate for given angles*/
 	void rotate(glm::vec3 rotation);
+
+	/* Set Leap position */
+	void setLeapPosition(glm::vec3 pos);
 
 	/* Renders the object */
 	void render(glm::mat4 view_projection);
@@ -59,5 +63,8 @@ private:
 	GLuint numVertices;
 
 	GLuint diffuseID;
+
+	GLuint leapPos_ID;
+	glm::vec4 leap_pos;
 
 };

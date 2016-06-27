@@ -158,7 +158,7 @@ int main(const int argc, const char* argv[]) {
 		"simple_model.frag" , 
 		"simple_model.vert"
 		);
-        
+
     Vector3 bodyTranslation(0.0f, 1.6f, 5.0f);
     Vector3 bodyRotation;
 
@@ -228,8 +228,11 @@ int main(const int argc, const char* argv[]) {
 
 
 
-		Leap::Vector palmVelocity = getPalmVelocity(controller.frame());
-		pMesh->rotate(glm::vec3(palmVelocity.x, palmVelocity.y, palmVelocity.z));
+		//Leap::Vector palmVelocity = getPalmVelocity(controller.frame());
+		//pMesh->rotate(glm::vec3(palmVelocity.x, palmVelocity.y, palmVelocity.z));
+
+		Leap::Vector palmPosition = getPalmPosition(controller.frame());
+		pMesh->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
 
 		// update the scene
 		pMesh->update(dt);

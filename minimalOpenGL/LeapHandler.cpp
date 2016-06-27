@@ -7,6 +7,13 @@ Leap::Vector getPalmVelocity(const Leap::Frame& frame) {
 	return hand.palmVelocity();
 }
 
+Leap::Vector getPalmPosition(const Leap::Frame& frame) {
+	Leap::Hand hand = frame.hands().rightmost();
+	Leap::PointableList pointables = hand.pointables().extended();
+
+	return hand.palmPosition();
+}
+
 int getSwipeGesture(const Leap::Frame& frame) {
 	Leap::GestureList gl = frame.gestures();
 	for (Leap::Gesture gesture : gl) {

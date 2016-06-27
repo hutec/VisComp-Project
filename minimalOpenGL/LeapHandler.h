@@ -9,3 +9,6 @@ int getSwipeGesture(const Leap::Frame& frame);
 
 /* Check if hand is closed */
 bool isHandClosed(const Leap::Frame& frame);
+
+/* Return palm position */
+Leap::Vector getPalmPosition(const Leap::Frame& frame);

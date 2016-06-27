@@ -15,9 +15,12 @@ CMeshComponent::CMeshComponent()
 	, vao(0)
 	, numVertices(0)
 	, diffuseID(0)
+	, leapPos_ID(0)
 {
 	model_transform = glm::mat4(1.0f);
 	model_transform = glm::translate(model_transform, glm::vec3(0.0f, 1.0f, 0.0f));
+
+	leap_pos = glm::vec4(0.f);
 }
 
 CMeshComponent::~CMeshComponent()
@@ -72,6 +75,7 @@ bool CMeshComponent::loadShader(char* frag_shader_path, char* vert_shader_path)
 	// Get a handle for the model uniform
 	matVP_ID = glGetUniformLocationARB(modelProgram, "matVP");
 	diffuseID = glGetUniformLocation(modelProgram, "diffuse");
+	leapPos_ID = glGetUniformLocation(modelProgram, "leappos");
 
 	return true;
 }
@@ -235,7 +239,7 @@ bool CMeshComponent::initVertexBuffer()
 void CMeshComponent::update(float elapsedTime)
 {
 	// rotate the mesh with a speed of rotation_speed° per second
-	float rotation_speed = glm::radians(5.0f);
+	float rotation_speed = glm::radians(0.0f);
 	model_transform *= glm::rotate(rotation_speed * elapsedTime, glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
@@ -247,6 +251,17 @@ void CMeshComponent::rotate(glm::vec3 rotation)
 	model_transform *= glm::rotate(rotation.y, glm::vec3(1.0f, 0.0f, 0.0f));
 	//model_transform *= glm::rotate(rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
 }
+
+void CMeshComponent::setLeapPosition(glm::vec3 pos)
+{
+	//TODO this is far from optimal, try to remap the hand positions
+	for (int i = 0; i < 3; ++i) {
+		pos[i] = std::max(0.f, std::min(std::abs(pos[i]), 255.f)) / 255.f;
+	}
+	leap_pos = glm::vec4(pos.x, pos.y, pos.z, 1);
+
+}
+
 
 void CMeshComponent::render(glm::mat4 view_projection)
 {
@@ -270,6 +285,8 @@ void CMeshComponent::render(glm::mat4 view_projection)
 	glUniformMatrix4fv(matVP_ID, 1, GL_FALSE, &mvp[0][0]);
 	glBindVertexArray(vao);
 
+	glUniform4f(leapPos_ID, leap_pos[0], leap_pos[1], leap_pos[2], leap_pos[3]);
+
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
@@ -277,6 +294,7 @@ void CMeshComponent::render(glm::mat4 view_projection)
 	glActiveTexture(GL_TEXTURE0);
 	tDiffuse.bind();
 	glUniform1i(diffuseID, 0);
+
 
 	// draw the triangles
 	glDrawArrays(GL_TRIANGLES, 0, numVertices);
