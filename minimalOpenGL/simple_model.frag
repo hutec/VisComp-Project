@@ -8,5 +8,9 @@ uniform samplerCube cube_texture;
 out vec4 frag_colour;
 
 void main () {
-  frag_colour = texture(diffuse, texcoords) * leappos;
+  if (texture(diffuse, texcoords)[3] == 1.0) {
+	frag_colour = leappos;
+  } else {
+	frag_colour = texture(diffuse, texcoords) * leappos;
+  }
 }
