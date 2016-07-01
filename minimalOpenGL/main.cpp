@@ -235,7 +235,9 @@ int main(const int argc, const char* argv[]) {
 		pMesh->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
 
 		// update the scene
-		pMesh->update(dt);
+		//pMesh->update(dt);
+		glm::vec4 viewDirWS = Matrix4x4ToGLM(headToWorldMatrix) * glm::vec4(0.0f, 0.0f, 100.0f, 1.0f);
+		pMesh->alignToCamera(glm::vec3(viewDirWS.x, viewDirWS.y, viewDirWS.z), glm::vec3(0.0f, 1.0f, 0.0f));
 
 		// Draw the scene twice; for both eyes
         for (int eye = 0; eye < numEyes; ++eye) 

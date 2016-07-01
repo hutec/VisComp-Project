@@ -262,6 +262,18 @@ void CMeshComponent::setLeapPosition(glm::vec3 pos)
 
 }
 
+glm::mat4 CMeshComponent::billboard(glm::vec3 viewDir, glm::vec3 cameraUp) {
+	glm::vec3 look = normalize(viewDir);
+	glm::vec3 right = cross(cameraUp, look);
+	glm::vec3 up2 = cross(look, right);
+	glm::mat4 transform;
+	transform[0] = glm::vec4(right, 0);
+	transform[1] = glm::vec4(up2, 0);
+	transform[2] = glm::vec4(look, 0);
+	// toDo: add 3d position as member
+	return transform * glm::translate(glm::vec3(0.0f, 1.0f, 0.0f));
+}
+
 
 void CMeshComponent::render(glm::mat4 view_projection)
 {

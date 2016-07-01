@@ -28,6 +28,9 @@ public:
 	/* Rotate for given angles*/
 	void rotate(glm::vec3 rotation);
 
+	/* Rotate the object to be parallel to the image plane */
+	void alignToCamera(glm::vec3 viewDir, glm::vec3 cameraUp) { model_transform = billboard(viewDir, cameraUp); }
+
 	/* Set Leap position */
 	void setLeapPosition(glm::vec3 pos);
 
@@ -37,9 +40,11 @@ public:
 	/* Releases the allocated buffers */
 	void cleanup();
 
+
 private:
 	bool initVertexBuffer();
 	bool loadShader(char* frag_shader_path, char* vert_shader_path);
+	glm::mat4 billboard(glm::vec3 viewDir, glm::vec3 cameraUp);
 
 private:
 	GLMmodel	*model;
