@@ -1,4 +1,9 @@
 #pragma once
+#ifndef PI
+#define PI 3.1415927f
+#endif
+
+
 #include "Leap.h"
 
 /* Gets the palm velocity of right most hand */
