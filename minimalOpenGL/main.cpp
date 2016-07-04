@@ -263,7 +263,7 @@ int main(const int argc, const char* argv[]) {
 
 
 			// Draw the Anttweakbar UI
-			TwDraw();
+			// TwDraw();
 
 #           ifdef _VR
             {

@@ -9,6 +9,7 @@
 #include "helper/wavefront_obj_loader/GLMmodel.h"
 #include "helper/OGLTexture.h"
 #include <glm.hpp>
+#include <gtx/transform.hpp>
 #include <iostream>
 #include "helper/GLCommon.h"
 #include <algorithm>
@@ -29,7 +30,7 @@ public:
 	void rotate(glm::vec3 rotation);
 
 	/* Rotate the object to be parallel to the image plane */
-	void alignToCamera(glm::vec3 viewDir, glm::vec3 cameraUp) { model_transform = billboard(viewDir, cameraUp); }
+	void alignToCamera(glm::vec3 viewDir, glm::vec3 cameraUp);
 
 	/* Set Leap position */
 	void setLeapPosition(glm::vec3 pos);

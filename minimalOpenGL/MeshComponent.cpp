@@ -1,5 +1,4 @@
 #include "MeshComponent.h"
-#include <gtx/transform.hpp>
 #include <iostream>
 
 #define PRINT_TO_CONSOLE 0
@@ -262,6 +261,11 @@ void CMeshComponent::setLeapPosition(glm::vec3 pos)
 
 }
 
+void CMeshComponent::alignToCamera(glm::vec3 viewDir, glm::vec3 cameraUp)
+{
+	model_transform = billboard(viewDir, cameraUp) * glm::translate(glm::vec3(0.0f, 1.0f, 0.0f)); 
+}
+
 glm::mat4 CMeshComponent::billboard(glm::vec3 viewDir, glm::vec3 cameraUp) {
 	glm::vec3 look = normalize(viewDir);
 	glm::vec3 right = cross(cameraUp, look);
@@ -270,8 +274,7 @@ glm::mat4 CMeshComponent::billboard(glm::vec3 viewDir, glm::vec3 cameraUp) {
 	transform[0] = glm::vec4(right, 0);
 	transform[1] = glm::vec4(up2, 0);
 	transform[2] = glm::vec4(look, 0);
-	// toDo: add 3d position as member
-	return transform * glm::translate(glm::vec3(0.0f, 1.0f, 0.0f));
+	return transform;
 }
 
 
