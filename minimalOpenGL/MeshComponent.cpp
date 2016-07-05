@@ -258,7 +258,15 @@ void CMeshComponent::setLeapPosition(glm::vec3 pos)
 		pos[i] = std::max(0.f, std::min(std::abs(pos[i]), 255.f)) / 255.f;
 	}
 	leap_pos = glm::vec4(pos.x, pos.y, pos.z, 1);
+}
 
+void CMeshComponent::moveTo(glm::vec3 pos)
+{
+	//TODO: this erases the orientation, find a way to preserve orientation
+	for (int i = 0; i < 3; ++i) {
+		pos[i] = pos[i] / 20.f;
+	}
+	model_transform = glm::translate(pos);
 }
 
 void CMeshComponent::alignToCamera(glm::vec3 viewDir, glm::vec3 cameraUp)

@@ -35,6 +35,9 @@ public:
 	/* Set Leap position */
 	void setLeapPosition(glm::vec3 pos);
 
+	/* Move to point */
+	void moveTo(glm::vec3 pos);
+
 	/* Renders the object */
 	void render(glm::mat4 view_projection);
 

@@ -68,6 +68,7 @@
 
 GLFWwindow* window = nullptr;
 CMeshComponent* pMesh = nullptr;
+CMeshComponent* sphere = nullptr;
 
 #ifdef _VR
     vr::IVRSystem* hmd = nullptr;
@@ -153,12 +154,19 @@ int main(const int argc, const char* argv[]) {
 
 	pMesh = new CMeshComponent();
 	pMesh->init(
-		"assets/quad.obj", 
+		"assets/quad.obj",
 		"assets/hello.png", 
 		"simple_model.frag" , 
 		"simple_model.vert"
 		);
 
+	sphere = new CMeshComponent();
+	sphere->init(
+		"assets/sphere.obj",
+		"assets/generator_diffuse.jpg",
+		"simple_model.frag",
+		"simple_model.vert"
+	);
     Vector3 bodyTranslation(0.0f, 1.6f, 5.0f);
     Vector3 bodyRotation;
 
@@ -227,12 +235,14 @@ int main(const int argc, const char* argv[]) {
         const Matrix4x4& headToWorldMatrix = bodyToWorldMatrix * headToBodyMatrix;
 
 
-
 		//Leap::Vector palmVelocity = getPalmVelocity(controller.frame());
 		//pMesh->rotate(glm::vec3(palmVelocity.x, palmVelocity.y, palmVelocity.z));
 
 		Leap::Vector palmPosition = getPalmPosition(controller.frame());
 		pMesh->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
+		
+		sphere->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
+		sphere->moveTo(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
 
 		// update the scene
 		//pMesh->update(dt);
@@ -259,8 +269,9 @@ int main(const int argc, const char* argv[]) {
 			// Draw the mesh
 			const Matrix4x4 viewProjectionMatrix4x4 = projectionMatrix[eye] * cameraToWorldMatrix.inverse();
 			glm::mat4 viewProjectionMatrix = Matrix4x4ToGLM(viewProjectionMatrix4x4);
+			
 			pMesh->render(viewProjectionMatrix);
-
+			sphere->render(viewProjectionMatrix);
 
 			// Draw the Anttweakbar UI
 			// TwDraw();
@@ -341,6 +352,9 @@ int main(const int argc, const char* argv[]) {
 	// Relesee the vertex buffers, shader and textures
 	pMesh->cleanup();
 	SAFE_DELETE(pMesh);
+
+	sphere->cleanup();
+	SAFE_DELETE(sphere);
 
 	// Terminate AntTweakBar and GLFW
 	TwTerminate();
