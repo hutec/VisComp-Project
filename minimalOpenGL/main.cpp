@@ -52,20 +52,23 @@
 // Uncomment to add VR support
 //#define _VR
 
-// To switch the box to a teapot, uncomment the following two lines
-//#include "teapot.h"
-//#define Shape Teapot
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "matrix.h"
 #include "minimalOpenGL.h"
+#include <AntTweakBar.h>
+#include "MeshComponent.h"
+#include "helper\MatrixConvertions.h"
 #include "Leap.h"
+#include "LeapHandler.h"
 
 #ifdef _VR
 #   include "minimalOpenVR.h"
 #endif
 
 GLFWwindow* window = nullptr;
+CMeshComponent* pMesh = nullptr;
+CMeshComponent* sphere = nullptr;
 
 #ifdef _VR
     vr::IVRSystem* hmd = nullptr;
@@ -75,37 +78,17 @@ GLFWwindow* window = nullptr;
 #   define Shape Cube
 #endif
 
-int processFrame(const Leap::Frame& frame) {
-	Leap::GestureList gl = frame.gestures();
-	for (Leap::Gesture gesture : gl) {
-		if (gesture.type() == Leap::SwipeGesture::classType()) {
-			Leap::SwipeGesture swipe = Leap::SwipeGesture(gesture);
-			if (swipe.direction().x > 0) {
-				std::cout << "Left swipe" << std::endl;
-				return -1;
-			} else {
-				std::cout << "Right swipe" << std::endl;
-				return 1;
-			}
-		}
-	}
-	return 0;
-}
+TwBar *bar;         // Pointer to a tweak bar
+inline void TwEventMouseButtonGLFW3(GLFWwindow* window, int button, int action, int mods) { TwEventMouseButtonGLFW(button, action); }
 
-Leap::Vector processMovement(const Leap::Frame& frame) {
-	Leap::Hand hand = frame.hands().rightmost();
-	Leap::PointableList pointables = hand.pointables().extended();
-	if (pointables.isEmpty() && !frame.hands().isEmpty()) {
-		std::cout << "Hand is closed" << std::endl;
-	}
-	return hand.palmVelocity();
-}
+inline void TwEventMousePosGLFW3(GLFWwindow* window, double xpos, double ypos) { TwMouseMotion(int(xpos), int(ypos)); }
 
-bool isHandClosed(const Leap::Frame& frame) {
-	Leap::Hand hand = frame.hands().rightmost();
-	Leap::PointableList pointables = hand.pointables().extended();
-	return pointables.isEmpty() && !frame.hands().isEmpty();
-}
+inline void TwEventMouseWheelGLFW3(GLFWwindow* window, double xoffset, double yoffset) { TwEventMouseWheelGLFW(yoffset); }
+
+inline void TwEventKeyGLFW3(GLFWwindow* window, int key, int scancode, int action, int mods) { TwEventKeyGLFW(key, action); }
+
+inline void TwEventCharGLFW3(GLFWwindow* window, int codepoint) { TwEventCharGLFW(codepoint, GLFW_PRESS); }
+
 
 int main(const int argc, const char* argv[]) {
     std::cout << "Minimal OpenGL 4.1 Example by Morgan McGuire\n\nW, A, S, D, C, Z keys to translate\nMouse click and drag to rotate\nESC to quit\n\n";
@@ -130,9 +113,70 @@ int main(const int argc, const char* argv[]) {
     const int windowWidth = (framebufferWidth * windowHeight) / framebufferHeight;
 
     window = initOpenGL(windowWidth, windowHeight, "minimalOpenGL");
-        
+
+	// Send the new window size to AntTweakBar
+	TwWindowSize(windowWidth, windowHeight);
+	// Initialize AntTweakBar
+	TwInit(TW_OPENGL_CORE, NULL);
+
+	double lastTime = glfwGetTime();
+	float dt = 0.0016f;
+	double turn = 0;    // Model turn counter
+	double speed = 0.3; // Model rotation speed
+	int wire = 0;       // Draw model in wireframe?
+	float bgColor[] = { 0.1f, 0.2f, 0.4f };         // Background color 
+	unsigned char cubeColor[] = { 255, 0, 0, 128 }; // Model color (32bits RGBA)
+													// Create a tweak bar
+	bar = TwNewBar("TweakBar");
+	TwDefine(" TweakBar position='250 20' "); // move bar to position (200, 40)
+	TwDefine(" TweakBar alpha=255 "); // opaque bar
+	TwDefine(" GLOBAL fontsize=3 "); // use large font
+	TwDefine(" GLOBAL fontstyle=default "); // use fixed-width font
+	TwDefine(" GLOBAL help='This example shows how to integrate AntTweakBar with GLFW and OpenGL.' "); // Message added to the help bar.
+
+																									   // Add 'speed' to 'bar': it is a modifable (RW) variable of type TW_TYPE_DOUBLE. Its key shortcuts are [s] and [S].
+	TwAddVarRW(bar, "speed", TW_TYPE_DOUBLE, &speed,
+		" label='Rot speed' min=0 max=2 step=0.01 keyIncr=s keyDecr=S help='Rotation speed (turns/second)' ");
+
+	// Add 'wire' to 'bar': it is a modifable variable of type TW_TYPE_BOOL32 (32 bits boolean). Its key shortcut is [w].
+	TwAddVarRW(bar, "wire", TW_TYPE_BOOL32, &wire,
+		" label='Wireframe mode' key=w help='Toggle wireframe display mode.' ");
+
+	// Add 'time' to 'bar': it is a read-only (RO) variable of type TW_TYPE_DOUBLE, with 1 precision digit
+	TwAddVarRO(bar, "time", TW_TYPE_DOUBLE, &turn, " label='Time' precision=1 help='Time (in seconds).' ");
+
+	// Add 'bgColor' to 'bar': it is a modifable variable of type TW_TYPE_COLOR3F (3 floats color)
+	TwAddVarRW(bar, "bgColor", TW_TYPE_COLOR3F, &bgColor, " label='Background color' ");
+
+	// Add 'cubeColor' to 'bar': it is a modifable variable of type TW_TYPE_COLOR32 (32 bits color) with alpha
+	TwAddVarRW(bar, "cubeColor", TW_TYPE_COLOR32, &cubeColor,
+		" label='Cube color' alpha help='Color and transparency of the cube.' ");
+
+	glfwSetMouseButtonCallback(window, (GLFWmousebuttonfun)TwEventMouseButtonGLFW3);
+	glfwSetCursorPosCallback(window, (GLFWcursorposfun)TwEventMousePosGLFW3);
+	glfwSetScrollCallback(window, (GLFWscrollfun)TwEventMouseWheelGLFW3);
+	glfwSetKeyCallback(window, (GLFWkeyfun)TwEventKeyGLFW3);
+	glfwSetCharCallback(window, (GLFWcharfun)TwEventCharGLFW3);
+
+	pMesh = new CMeshComponent();
+	pMesh->init(
+		"assets/quad.obj",
+		"assets/hello.png", 
+		"simple_model.frag" , 
+		"simple_model.vert"
+		);
+
+	sphere = new CMeshComponent();
+	sphere->init(
+		"assets/sphere.obj",
+		"assets/generator_diffuse.jpg",
+		"simple_model.frag",
+		"simple_model.vert"
+	);
     Vector3 bodyTranslation(0.0f, 1.6f, 5.0f);
     Vector3 bodyRotation;
+
+	Leap::Controller controller;
 
     //////////////////////////////////////////////////////////////////////
     // Allocate the frame buffer. This code allocates one framebuffer per eye.
@@ -166,125 +210,13 @@ int main(const int argc, const char* argv[]) {
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    /////////////////////////////////////////////////////////////////
-    // Load vertex array buffers
-
-    GLuint positionBuffer = GL_NONE;
-    glGenBuffers(1, &positionBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Shape::position), Shape::position, GL_STATIC_DRAW);
-
-    GLuint texCoordBuffer = GL_NONE;
-    glGenBuffers(1, &texCoordBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, texCoordBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Shape::texCoord), Shape::texCoord, GL_STATIC_DRAW);
-
-    GLuint normalBuffer = GL_NONE;
-    glGenBuffers(1, &normalBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Shape::normal), Shape::normal, GL_STATIC_DRAW);
-
-    GLuint tangentBuffer = GL_NONE;
-    glGenBuffers(1, &tangentBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, tangentBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Shape::tangent), Shape::tangent, GL_STATIC_DRAW);
-
-    const int numVertices = sizeof(Shape::position) / sizeof(Shape::position[0]);
-
-    GLuint indexBuffer = GL_NONE;
-    glGenBuffers(1, &indexBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Shape::index), Shape::index, GL_STATIC_DRAW);
-    const int numIndices = sizeof(Shape::index) / sizeof(Shape::index[0]);
-
-    /////////////////////////////////////////////////////////////////////
-    // Create the main shader
-    const GLuint shader = createShaderProgram(loadTextFile("min.vrt"), loadTextFile("min.pix"));
-
-    // Binding points for attributes and uniforms discovered from the shader
-    const GLint positionAttribute   = glGetAttribLocation(shader,  "position");
-    const GLint normalAttribute     = glGetAttribLocation(shader,  "normal");
-    const GLint texCoordAttribute   = glGetAttribLocation(shader,  "texCoord");
-    const GLint tangentAttribute    = glGetAttribLocation(shader,  "tangent");    
-    const GLint colorTextureUniform = glGetUniformLocation(shader, "colorTexture");
-
-    const GLuint uniformBlockIndex = glGetUniformBlockIndex(shader, "Uniform");
-    const GLuint uniformBindingPoint = 1;
-    glUniformBlockBinding(shader, uniformBlockIndex, uniformBindingPoint);
-
-    GLuint uniformBlock;
-    glGenBuffers(1, &uniformBlock);
-
-    {
-        // Allocate space for the uniform block buffer
-        GLint uniformBlockSize;
-        glGetActiveUniformBlockiv(shader, uniformBlockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &uniformBlockSize);
-        glBindBuffer(GL_UNIFORM_BUFFER, uniformBlock);
-        glBufferData(GL_UNIFORM_BUFFER, uniformBlockSize, nullptr, GL_DYNAMIC_DRAW);
-    }
-
-    const GLchar* uniformName[] = {
-        "Uniform.objectToWorldNormalMatrix",
-        "Uniform.objectToWorldMatrix",
-        "Uniform.modelViewProjectionMatrix",
-        "Uniform.light",
-        "Uniform.cameraPosition"};
-
-    const int numBlockUniforms = sizeof(uniformName) / sizeof(uniformName[0]);
-#   ifdef _DEBUG
-    {
-        GLint debugNumUniforms = 0;
-        glGetProgramiv(shader, GL_ACTIVE_UNIFORMS, &debugNumUniforms);
-        for (GLint i = 0; i < debugNumUniforms; ++i) {
-            GLchar name[1024];
-            GLsizei size = 0;
-            GLenum type = GL_NONE;
-            glGetActiveUniform(shader, i, sizeof(name), nullptr, &size, &type, name);
-            std::cout << "Uniform #" << i << ": " << name << "\n";
-        }
-        assert(debugNumUniforms >= numBlockUniforms);
-    }
-#   endif
-
-    // Map uniform names to indices within the block
-    GLuint uniformIndex[numBlockUniforms];
-    glGetUniformIndices(shader, numBlockUniforms, uniformName, uniformIndex);
-    assert(uniformIndex[0] < 10000);
-
-    // Map indices to byte offsets
-    GLint  uniformOffset[numBlockUniforms];
-    glGetActiveUniformsiv(shader, numBlockUniforms, uniformIndex, GL_UNIFORM_OFFSET, uniformOffset);
-    assert(uniformOffset[0] >= 0);
-
-    // Load a texture map
-    GLuint colorTexture = GL_NONE;
-    {
-        int textureWidth, textureHeight, channels;
-        std::vector<std::uint8_t> data;
-        loadBMP("color.bmp", textureWidth, textureHeight, channels, data);
-
-        glGenTextures(1, &colorTexture);
-        glBindTexture(GL_TEXTURE_2D, colorTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, textureWidth, textureHeight, 0, (channels == 3) ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, &data[0]);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-
-    GLuint trilinearSampler = GL_NONE;
-    {
-        glGenSamplers(1, &trilinearSampler);
-        glSamplerParameteri(trilinearSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glSamplerParameteri(trilinearSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glSamplerParameteri(trilinearSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glSamplerParameteri(trilinearSampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    }
-
 #   ifdef _VR
         vr::TrackedDevicePose_t trackedDevicePose[vr::k_unMaxTrackedDeviceCount];
 #   endif
 
     // Main loop:
-    int timer = 0;
-    while (! glfwWindowShouldClose(window)) {
+    while (! glfwWindowShouldClose(window)) 
+	{
         assert(glGetError() == GL_NONE);
 
 		//int movement = processFrame(controller.frame());
@@ -313,85 +245,48 @@ int main(const int argc, const char* argv[]) {
 
         const Matrix4x4& headToWorldMatrix = bodyToWorldMatrix * headToBodyMatrix;
 
-        for (int eye = 0; eye < numEyes; ++eye) {
+
+		//Leap::Vector palmVelocity = getPalmVelocity(controller.frame());
+		//pMesh->rotate(glm::vec3(palmVelocity.x, palmVelocity.y, palmVelocity.z));
+
+		Leap::Vector palmPosition = getPalmPosition(controller.frame());
+		pMesh->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
+		
+		sphere->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
+		sphere->moveTo(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
+
+		// update the scene
+		//pMesh->update(dt);
+		glm::vec4 viewDirWS = Matrix4x4ToGLM(headToWorldMatrix) * glm::vec4(0.0f, 0.0f, 100.0f, 1.0f);
+		pMesh->alignToCamera(glm::vec3(viewDirWS.x, viewDirWS.y, viewDirWS.z), glm::vec3(0.0f, 1.0f, 0.0f));
+
+		// Draw the scene twice; for both eyes
+        for (int eye = 0; eye < numEyes; ++eye) 
+		{
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer[eye]);
             glViewport(0, 0, framebufferWidth, framebufferHeight);
 
             glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            const Matrix4x4& objectToWorldMatrix       = Matrix4x4::translate(0.0f, 0.5f, 0.0f) * Matrix4x4::yaw(PI / 3.0f);
-            const Matrix3x3& objectToWorldNormalMatrix = Matrix3x3(objectToWorldMatrix).transpose().inverse();
-            const Matrix4x4& cameraToWorldMatrix       = headToWorldMatrix * eyeToHead[eye];
 
-            const Vector3& light = Vector3(1.0f, 0.5f, 0.2f).normalize();
+            const Matrix4x4& cameraToWorldMatrix = headToWorldMatrix * eyeToHead[eye];
+
+            const Vector3& light = Vector3(1.0f, 0.5f, 0.2f).normalize();			
 
             // Draw the background
             drawSky(framebufferWidth, framebufferHeight, nearPlaneZ, farPlaneZ, cameraToWorldMatrix.data, projectionMatrix[eye].inverse().data, &light.x);
 
-            ////////////////////////////////////////////////////////////////////////
-            // Draw a mesh
-            glEnable(GL_DEPTH_TEST);
-            glDepthFunc(GL_LESS);
-            glEnable(GL_CULL_FACE);
-            glDepthMask(GL_TRUE);
-        
-            glUseProgram(shader);
+			// Draw the mesh
+			const Matrix4x4 viewProjectionMatrix4x4 = projectionMatrix[eye] * cameraToWorldMatrix.inverse();
+			glm::mat4 viewProjectionMatrix = Matrix4x4ToGLM(viewProjectionMatrix4x4);
+			
+			pMesh->render(viewProjectionMatrix);
+			sphere->render(viewProjectionMatrix);
 
-            // in position
-            glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
-            glVertexAttribPointer(positionAttribute, 3, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(positionAttribute);
+			// Draw the Anttweakbar UI
+			// TwDraw();
 
-            // in normal
-            glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
-            glVertexAttribPointer(normalAttribute, 3, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(normalAttribute);
-
-            // in tangent
-            if (tangentAttribute != -1) {
-                // Only bind if used
-                glBindBuffer(GL_ARRAY_BUFFER, tangentBuffer);
-                glVertexAttribPointer(tangentAttribute, 4, GL_FLOAT, GL_FALSE, 0, 0);
-                glEnableVertexAttribArray(tangentAttribute);
-            }
-
-            // in texCoord 
-            glBindBuffer(GL_ARRAY_BUFFER, texCoordBuffer);
-            glVertexAttribPointer(texCoordAttribute, 2, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(texCoordAttribute);
-
-            // indexBuffer
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-
-            // uniform colorTexture (samplers cannot be placed in blocks)
-            const GLint colorTextureUnit = 0;
-            glActiveTexture(GL_TEXTURE0 + colorTextureUnit);
-            glBindTexture(GL_TEXTURE_2D, colorTexture);
-            glBindSampler(colorTextureUnit, trilinearSampler);
-            glUniform1i(colorTextureUniform, colorTextureUnit);
-
-            // Other uniforms in the interface block
-            {
-                glBindBufferBase(GL_UNIFORM_BUFFER, uniformBindingPoint, uniformBlock);
-
-                GLubyte* ptr = (GLubyte*)glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
-                // mat3 is passed to openGL as if it was mat4 due to padding rules.
-                for (int row = 0; row < 3; ++row) {
-                    memcpy(ptr + uniformOffset[0] + sizeof(float) * 4 * row, objectToWorldNormalMatrix.data + row * 3, sizeof(float) * 3);
-                }
-
-                memcpy(ptr + uniformOffset[1], objectToWorldMatrix.data, sizeof(objectToWorldMatrix));
-
-                const Matrix4x4& modelViewProjectionMatrix = projectionMatrix[eye] * cameraToWorldMatrix.inverse() * objectToWorldMatrix;
-                memcpy(ptr + uniformOffset[2], modelViewProjectionMatrix.data, sizeof(modelViewProjectionMatrix));
-                memcpy(ptr + uniformOffset[3], &light.x, sizeof(light));
-                const Vector4& cameraPosition = cameraToWorldMatrix.col(3);
-                memcpy(ptr + uniformOffset[4], &cameraPosition.x, sizeof(Vector3));
-                glUnmapBuffer(GL_UNIFORM_BUFFER);
-            }
-
-            glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, 0);
 #           ifdef _VR
             {
                 const vr::Texture_t tex = { reinterpret_cast<void*>(intptr_t(colorRenderTarget[eye])), vr::API_OpenGL, vr::ColorSpace_Gamma };
@@ -412,6 +307,7 @@ int main(const int argc, const char* argv[]) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glBlitFramebuffer(0, 0, framebufferWidth, framebufferHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
         glBindFramebuffer(GL_READ_FRAMEBUFFER, GL_NONE);
+
 
         // Display what has been drawn on the main window
         glfwSwapBuffers(window);
@@ -461,12 +357,10 @@ int main(const int argc, const char* argv[]) {
             inDrag = false;
         }
 
-		if (isHandClosed(controller.frame()) && !(GLFW_PRESS == glfwGetKey(window, GLFW_KEY_H))) {
-			bodyRotation.x += (palmVelocity.y / 100) * cameraTurnSpeed;
-			bodyRotation.y -= (palmVelocity.x / 100) * cameraTurnSpeed;
-		}
-
-        ++timer;
+		/* Timer and fps */
+		double currentTime = glfwGetTime();
+		dt = (float)(currentTime - lastTime);
+		lastTime = currentTime;
     }
 
 #   ifdef _VR
@@ -474,6 +368,16 @@ int main(const int argc, const char* argv[]) {
             vr::VR_Shutdown();
         }
 #   endif
+
+	// Relesee the vertex buffers, shader and textures
+	pMesh->cleanup();
+	SAFE_DELETE(pMesh);
+
+	sphere->cleanup();
+	SAFE_DELETE(sphere);
+
+	// Terminate AntTweakBar and GLFW
+	TwTerminate();
 
     // Close the GL context and release all resources
     glfwTerminate();

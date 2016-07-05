@@ -6,6 +6,10 @@ Repository for the Visual Computing Project @ KIT SS16
 For installing the Leap SDK follow
 https://developer.leapmotion.com/documentation/cpp/devguide/Project_Setup.html
 
+Add LeapHandler.cpp and LeapHandler.h to the Visual Studio Project 
+
+
+
 ## Errors
 If Leap.h throws an error, surround the throwing code with
 ```
@@ -14,6 +18,7 @@ If Leap.h throws an error, surround the throwing code with
 //Code here
 
 #endif
+
 ```
 
 

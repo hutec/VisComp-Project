@@ -40,7 +40,7 @@
 
 
 #ifdef _WINDOWS
-// Link against OpenGL
+    // Link against OpenGL
 #   pragma comment(lib, "opengl32")
 #   pragma comment(lib, "glew32")
 #   pragma comment(lib, "glfw3")
