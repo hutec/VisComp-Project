@@ -4,6 +4,12 @@
 #include "GL/glew.h"
 #include <GLFW/glfw3.h>
 #include <glm.hpp>
+#include <string>
+
+extern glm::vec3 camPos;
+
+void printMat4(glm::mat4 m, std::string matName = "");
+void printVec3(glm::vec3 v, std::string vecName = "");
 
 //OpenGL utility functions
 bool CreateShaderFromFile(const char* Path, GLhandleARB shader);

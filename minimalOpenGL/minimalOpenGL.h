@@ -74,7 +74,7 @@ GLFWwindow* initOpenGL(int width, int height, const std::string& title) {
 
     // Without these, shaders actually won't initialize properly
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
@@ -175,7 +175,7 @@ GLuint createShaderProgram(const std::string& vertexShaderSource, const std::str
     \param light Light vector, must be normalized 
  */
 void drawSky(int windowWidth, int windowHeight, float nearPlaneZ, float farPlaneZ, const float* cameraToWorldMatrix, const float* projectionMatrixInverse, const float* light) {
-#   define VERTEX_SHADER(s) "#version 410\n" #s
+#   define VERTEX_SHADER(s) "#version 430\n" #s
 #   define PIXEL_SHADER(s) VERTEX_SHADER(s)
 
     static const GLuint skyShader = createShaderProgram(VERTEX_SHADER

@@ -45,6 +45,9 @@
     <ClCompile Include="LeapHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="VCModels.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="minimalOpenGL.h">
@@ -77,7 +80,7 @@
     <ClInclude Include="helper\stbi_image\stb_image.h">
       <Filter>helper</Filter>
     </ClInclude>
-    <ClInclude Include="LeapHandler.h">
+    <ClInclude Include="VCModels.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

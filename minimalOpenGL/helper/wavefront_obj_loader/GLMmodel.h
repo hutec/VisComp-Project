@@ -6,6 +6,7 @@
  *  www: http://www.pobox.com/~ndr
  */
 
+#pragma once
 
 /* includes */
 #ifdef _WIN32
