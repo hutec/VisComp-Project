@@ -5,14 +5,17 @@
 #include <GLFW/glfw3.h>
 #include <glm.hpp>
 #include <string>
+#include <vector>
 #include "OGLTexture.h"
 
+class VCModel;
 
 struct EnvVar {
     glm::vec3 camPos;
     OGLTexture envMap;
     glm::mat4 viewMat;
     glm::mat4 projMat;
+    std::vector<VCModel *> scene;
 };
 
 extern EnvVar ENV_VAR;

@@ -185,6 +185,7 @@ int main(const int argc, const char* argv[]) {
     std::vector<std::string> _uniformNames = { "MVP", "leappos" };
     std::string _texPath{ "assets/hello.png" };
     helloText = new VCText2D(_objPath, _shaderPaths, _uniformNames, _texPath);
+    ENV_VAR.scene.push_back(helloText);
     helloText->translate(glm::vec3(0.f, 3.f, 0.f));
 
     _shaderPaths.clear();
@@ -203,10 +204,12 @@ int main(const int argc, const char* argv[]) {
     _uniformNames = { "MVP", "ModelMat", "normalMat", "camPos", "lightPos",
         "diffuse", "specular", "shininess" };
     chH = new VCCh3D(_objPath, _shaderPaths, _uniformNames);
+    ENV_VAR.scene.push_back(chH);
     chH->translate(glm::vec3(0.f, 3.f, -5.f));
 
     _objPath = std::string("assets/sphere.obj");
     sphereModel = new VCCh3D(_objPath, _shaderPaths, _uniformNames);
+    ENV_VAR.scene.push_back(sphereModel);
     sphereModel->translate(glm::vec3(3.f, 0.f, 1.f));
 
 
@@ -216,6 +219,7 @@ int main(const int argc, const char* argv[]) {
     _shaderPaths["shaders/sphere_sky.frag"] = GL_FRAGMENT_SHADER;
     _uniformNames = {"MVP"};
     sphereSky = new SphereSky(_shaderPaths, _uniformNames, _objPath);
+    ENV_VAR.scene.push_back(sphereSky);
     sphereSky->scale(glm::vec3(50));
 
 
@@ -231,6 +235,7 @@ int main(const int argc, const char* argv[]) {
 
 #ifdef HEAD_MODEL
     headModel = new VCPSModel(_objPath, _shaderPaths, _uniformNames, ".png");
+    ENV_VAR.scene.push_back(headModel);
     headModel->scale(glm::vec3(5.f));
     headModel->translate(glm::vec3(-3.f, 0.f, 0.f));
 #endif
@@ -239,6 +244,7 @@ int main(const int argc, const char* argv[]) {
 
 #ifdef STICK_MODEL
     stickModel = new VCPSModel(_objPath, _shaderPaths, _uniformNames, ".jpg");
+    ENV_VAR.scene.push_back(stickModel);
     stickModel->scale(glm::vec3(5.f));
     stickModel->rotate(M_PI / 3.5f, glm::vec3(1.f, 0.f, 0.f));
     stickModel->translate(glm::vec3(0.f, 0.f, -4.f));
@@ -248,6 +254,7 @@ int main(const int argc, const char* argv[]) {
 
 #ifdef DOLL_MODEL
     dollModel = new VCPSModel(_objPath, _shaderPaths, _uniformNames, ".jpg");
+    ENV_VAR.scene.push_back(dollModel);
     dollModel->scale(glm::vec3(5.f));
     dollModel->translate(glm::vec3(1.f, 2.f, 0.f));
     dollModel->rotate(-M_PI, glm::vec3(1.f, 0.f, 0.f));
@@ -451,7 +458,11 @@ int main(const int argc, const char* argv[]) {
         if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_D)) { bodyTranslation += Vector3(headToWorldMatrix * Vector4(+cameraMoveSpeed, 0, 0, 0)); }
         if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_C)) { bodyTranslation.y -= cameraMoveSpeed; }
         if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_SPACE)) || (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_Z))) { bodyTranslation.y += cameraMoveSpeed; }
-
+        if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F5))) {
+            for (auto i : ENV_VAR.scene) {
+                i->initShaderProg();
+            }
+        }
         // Keep the camera above the ground
         if (bodyTranslation.y < 0.01f) { bodyTranslation.y = 0.01f; }
 
