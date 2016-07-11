@@ -79,6 +79,8 @@ VCPSModel *stickModel = nullptr;
 VCPSModel *dollModel = nullptr;
 Sky *sky = nullptr;
 SphereSky *sphereSky = nullptr;
+// break the sphere at (-1, 0, 0), to make the seam gone
+SkySphere *skySphere = nullptr;
 
 #ifdef _VR
     vr::IVRSystem* hmd = nullptr;
@@ -216,12 +218,16 @@ int main(const int argc, const char* argv[]) {
     ENV_VAR.envMap.load("assets/envMap.jpg");
     _shaderPaths.clear();
     _shaderPaths["shaders/sphere_sky.vert"] = GL_VERTEX_SHADER;
+    _shaderPaths["shaders/sphere_sky.tes"] = GL_TESS_EVALUATION_SHADER;
     _shaderPaths["shaders/sphere_sky.frag"] = GL_FRAGMENT_SHADER;
     _uniformNames = {"MVP"};
     sphereSky = new SphereSky(_shaderPaths, _uniformNames, _objPath);
     ENV_VAR.scene.push_back(sphereSky);
     sphereSky->scale(glm::vec3(50));
 
+    skySphere = new SkySphere(_shaderPaths, _uniformNames);
+    ENV_VAR.scene.push_back(skySphere);
+    skySphere->scale(glm::vec3(60));
 
 // #define HEAD_MODEL
 // #define STICK_MODEL
@@ -307,7 +313,7 @@ int main(const int argc, const char* argv[]) {
         assert(glGetError() == GL_NONE);
 
         const float nearPlaneZ = -0.1f;
-        const float farPlaneZ = -100.0f;
+        const float farPlaneZ = -1000.0f;
         const float verticalFieldOfView = 45.0f * PI / 180.0f;
 
         Matrix4x4 eyeToHead[numEyes], projectionMatrix[numEyes], headToBodyMatrix;
@@ -386,7 +392,8 @@ int main(const int argc, const char* argv[]) {
             sphere->render(viewProjectionMatrix);
 
             chH->draw();
-            sphereSky->draw();
+            // sphereSky->draw();
+            skySphere->draw();
 #ifdef HEAD_MODEL
             headModel->draw();
 #endif

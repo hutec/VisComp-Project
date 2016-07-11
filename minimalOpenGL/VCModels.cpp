@@ -609,15 +609,90 @@ SphereSky::draw()
     glUseProgram(m_shaderProg);
     glm::mat4 mvp = ENV_VAR.projMat * ENV_VAR.viewMat *modelMat();
     glUniformMatrix4fv(m_uniformLocs["MVP"], 1, GL_FALSE, &mvp[0][0]);
+
+    GLfloat tessLvl = 16;
+    GLfloat outerLevel[4] = { tessLvl, tessLvl, tessLvl, tessLvl };
+    GLfloat innerLevel[2] = { tessLvl, tessLvl };
+
+    glPatchParameterfv(GL_PATCH_DEFAULT_OUTER_LEVEL, outerLevel);
+    glPatchParameterfv(GL_PATCH_DEFAULT_INNER_LEVEL, innerLevel);
+    glPatchParameteri(GL_PATCH_VERTICES, 3);
+
     for (auto grp : m_groups) {
         for (auto mtlGrp : grp->m_mtlGroups) {
             glBindVertexArray(mtlGrp->m_vao);
             setupMtlUniforms(mtlGrp); // for SPHERE_SKY_OPTION this line is actually not necessary
             glActiveTexture(GL_TEXTURE0);
             ENV_VAR.envMap.bind();
-            glDrawArrays(GL_TRIANGLES, 0, mtlGrp->m_numVert);
+            glDrawArrays(GL_PATCHES, 0, mtlGrp->m_numVert);
         }
     }
     assert(glGetError() == GL_NONE);
 
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+SkySphere::SkySphere(const std::map<std::string, GLenum> &_shaderPaths,
+    const std::vector<std::string> &_uniformNames) :
+    VCModel(_shaderPaths, _uniformNames)
+{
+    float r = 1.f;
+    glm::vec3 vertices[] = {
+        glm::vec3( 0.f,  1.f,  0.f),
+        glm::vec3( 0.f,  0.f,  1.f),
+        glm::vec3( 1.f,  0.f,  0.f),
+        glm::vec3( 0.f,  0.f, -1.f),
+        glm::vec3(-0.999999f,  0.f,  -0.00001f), // break the sphere at(-1, 0, 0)
+        glm::vec3(-0.999999f,  0.f,  0.00001f),
+        glm::vec3( 0.f,   -r,  0.f)
+    };
+    GLuint indices[] = {
+        0, 1, 0, 2,
+        0, 2, 0, 3,
+        0, 3, 0, 4,
+        0, 5, 0, 1,
+        6, 2, 6, 1,
+        6, 3, 6, 2,
+        6, 4, 6, 3,
+        6, 5, 6, 1
+    };
+    glGenVertexArrays(1, &m_vao);
+    glBindVertexArray(m_vao);
+    glGenBuffers(1, &m_vbo);
+    glGenBuffers(1, &m_ebo);
+    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+    glBufferData(GL_ARRAY_BUFFER, 7 * 3 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 8 * 4 * sizeof(GLuint), indices, GL_STATIC_DRAW);
+}
+
+SkySphere::~SkySphere()
+{
+    glDeleteBuffers(1, &m_vbo);
+    glDeleteBuffers(1, &m_ebo);
+    glDeleteVertexArrays(1, &m_vao);
+}
+
+void
+SkySphere::draw()
+{
+    assert(glGetError() == GL_NONE);
+    glBindVertexArray(m_vao);
+    glUseProgram(m_shaderProg);
+    glActiveTexture(GL_TEXTURE0);
+    ENV_VAR.envMap.bind();
+    glm::mat4 mvp = ENV_VAR.projMat * ENV_VAR.viewMat *modelMat();
+    glUniformMatrix4fv(m_uniformLocs["MVP"], 1, GL_FALSE, &mvp[0][0]);
+    GLfloat tessLvl = 32;
+    GLfloat outerLevel[4] = { tessLvl, tessLvl, tessLvl, tessLvl };
+    GLfloat innerLevel[2] = { tessLvl, tessLvl };
+
+    glPatchParameterfv(GL_PATCH_DEFAULT_OUTER_LEVEL, outerLevel);
+    glPatchParameterfv(GL_PATCH_DEFAULT_INNER_LEVEL, innerLevel);
+    glPatchParameteri(GL_PATCH_VERTICES, 4);
+
+    glDrawElements(GL_PATCHES, 8 * 4, GL_UNSIGNED_INT, 0);
+    assert(glGetError() == GL_NONE);
 }

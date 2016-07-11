@@ -214,3 +214,26 @@ public:
 private:
 
 };
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// break the sphere at (-1, 0, 0), to make the seam gone
+// float phi = 2 * atan(dir.z, dir.x);
+// tesTexCoord = vec2(1 - phi / (2 * M_PI), 1 - theta / M_PI);
+// these two lines shader code above indicates that tex coords for (-1, 0, 0) can be both 0 and 1.
+
+
+class SkySphere : public VCModel {
+public:
+    SkySphere(const std::map<std::string, GLenum> &_shaderPaths,
+        const std::vector<std::string> &_uniformNames);
+    ~SkySphere();
+    void draw();
+private:
+    GLuint m_vao;
+    GLuint m_vbo;
+    GLuint m_ebo;
+
+};
+
+
+/////////////////////////////////////////////////////////////////////////////////////////

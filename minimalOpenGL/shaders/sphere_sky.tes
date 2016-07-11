@@ -1,0 +1,31 @@
+#version 430 core
+
+uniform mat4 MVP;
+
+layout (quads, equal_spacing, ccw) in;
+
+out vec2 tesTexCoord;
+
+vec4 calcPos()
+{
+    float radius = 1.0;
+    vec4 mid1 = mix(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_TessCoord.x);
+    vec4 mid2 = mix(gl_in[2].gl_Position, gl_in[3].gl_Position, gl_TessCoord.x);
+    vec3 p = vec3(mix(mid1, mid2, gl_TessCoord.y));
+    vec3 normal = normalize(p);
+    return vec4(radius * normal, 1.0);
+}
+
+void main(void)
+{
+    float M_PI = atan(1.0) * 4.0;
+    
+    vec4 pos = calcPos();
+    gl_Position = MVP * pos;
+    
+    vec3 dir = normalize(pos.xyz);
+    float theta = acos(dir.y);
+    
+    float phi = 2 * atan(dir.z, dir.x);
+    tesTexCoord = vec2(1 - phi / (2 * M_PI),1 - theta / M_PI);
+}
