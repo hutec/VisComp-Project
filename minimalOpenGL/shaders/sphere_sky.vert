@@ -12,5 +12,5 @@ void main () {
     vec3 dir = normalize(position);
     float theta = acos(dir.y);
     float phi = 2 * atan(dir.z, dir.x) + M_PI;
-    vsTexCoord = vec2(phi / (2 * M_PI),1 - theta / M_PI);
+    vsTexCoord = vec2(1 - phi / (2 * M_PI),1 - theta / M_PI);
 }
