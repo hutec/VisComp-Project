@@ -5,8 +5,17 @@
 #include <GLFW/glfw3.h>
 #include <glm.hpp>
 #include <string>
+#include "OGLTexture.h"
 
-extern glm::vec3 camPos;
+
+struct EnvVar {
+    glm::vec3 camPos;
+    OGLTexture envMap;
+    glm::mat4 viewMat;
+    glm::mat4 projMat;
+};
+
+extern EnvVar ENV_VAR;
 
 void printMat4(glm::mat4 m, std::string matName = "");
 void printVec3(glm::vec3 v, std::string vecName = "");

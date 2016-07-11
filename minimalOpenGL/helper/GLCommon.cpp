@@ -3,7 +3,7 @@
 
 using namespace std;
 
-glm::vec3 camPos;
+EnvVar ENV_VAR;
 
 void
 printMat4(glm::mat4 m, std::string matName)

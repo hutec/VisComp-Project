@@ -78,6 +78,7 @@ VCPSModel *headModel = nullptr;
 VCPSModel *stickModel = nullptr;
 VCPSModel *dollModel = nullptr;
 Sky *sky = nullptr;
+SphereSky *sphereSky = nullptr;
 
 #ifdef _VR
     vr::IVRSystem* hmd = nullptr;
@@ -207,6 +208,15 @@ int main(const int argc, const char* argv[]) {
     _objPath = std::string("assets/sphere.obj");
     sphereModel = new VCCh3D(_objPath, _shaderPaths, _uniformNames);
     sphereModel->translate(glm::vec3(3.f, 0.f, 1.f));
+
+
+    ENV_VAR.envMap.load("assets/envMap.jpg");
+    _shaderPaths.clear();
+    _shaderPaths["shaders/sphere_sky.vert"] = GL_VERTEX_SHADER;
+    _shaderPaths["shaders/sphere_sky.frag"] = GL_FRAGMENT_SHADER;
+    _uniformNames = {"MVP"};
+    sphereSky = new SphereSky(_shaderPaths, _uniformNames, _objPath);
+    sphereSky->scale(glm::vec3(50));
 
 
 // #define HEAD_MODEL
@@ -339,58 +349,61 @@ int main(const int argc, const char* argv[]) {
 		// Draw the scene twice; for both eyes
         for (int eye = 0; eye < numEyes; ++eye) 
 		{
+            const Matrix4x4& cameraToWorldMatrix = headToWorldMatrix * eyeToHead[eye];
+
+            const Vector3& light = Vector3(1.0f, 0.5f, 0.2f).normalize();
+
+            const Matrix4x4 viewProjectionMatrix4x4 = projectionMatrix[eye] * cameraToWorldMatrix.inverse();
+            glm::mat4 viewProjectionMatrix = Matrix4x4ToGLM(viewProjectionMatrix4x4);
+
+            glm::mat4 _viewMat = Matrix4x4ToGLM(cameraToWorldMatrix.inverse());
+            glm::mat4 _view2WorldMat = Matrix4x4ToGLM(cameraToWorldMatrix);
+            glm::mat4 _projMat = Matrix4x4ToGLM(projectionMatrix[eye]);
+
+            ENV_VAR.camPos = glm::vec3(_view2WorldMat * glm::vec4(0.f, 0.f, 0.f, 1.f));
+            ENV_VAR.projMat = _projMat;
+            ENV_VAR.viewMat = _viewMat;
+
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer[eye]);
             glViewport(0, 0, framebufferWidth, framebufferHeight);
 
             glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-            const Matrix4x4& cameraToWorldMatrix = headToWorldMatrix * eyeToHead[eye];
-
-            const Vector3& light = Vector3(1.0f, 0.5f, 0.2f).normalize();			
-
             // Draw the background
             // drawSky(framebufferWidth, framebufferHeight, nearPlaneZ, farPlaneZ, cameraToWorldMatrix.data, projectionMatrix[eye].inverse().data, &light.x);
 
 			// Draw the mesh
-			const Matrix4x4 viewProjectionMatrix4x4 = projectionMatrix[eye] * cameraToWorldMatrix.inverse();
-			glm::mat4 viewProjectionMatrix = Matrix4x4ToGLM(viewProjectionMatrix4x4);
-
-            glm::mat4 _viewMat = Matrix4x4ToGLM(cameraToWorldMatrix.inverse());
-            glm::mat4 _view2WorldMat = Matrix4x4ToGLM(cameraToWorldMatrix);
-            glm::mat4 _projMat = Matrix4x4ToGLM(projectionMatrix[eye]);
-            camPos = glm::vec3(_view2WorldMat * glm::vec4(0.f, 0.f, 0.f, 1.f));
-
             glDepthRange(0, 0.9);
             assert(glGetError() == GL_NONE);
             sphere->render(viewProjectionMatrix);
 
-            chH->draw(_projMat, _viewMat);
+            chH->draw();
+            sphereSky->draw();
 #ifdef HEAD_MODEL
-            headModel->draw(_projMat, _viewMat);
+            headModel->draw();
 #endif
 
 #ifdef STICK_MODEL
-            stickModel->draw(_projMat, _viewMat);
+            stickModel->draw();
 #endif
 
 #ifdef DOLL_MODEL
-            dollModel->draw(_projMat, _viewMat);
+            dollModel->draw();
 #endif
 
-            sphereModel->draw(_projMat, _viewMat);
+            sphereModel->draw();
 
             assert(glGetError() == GL_NONE);
 
             glDepthRange(0.9, 1.0);
             // Using glDepthRange to force the background stay behind other objects
             // it's really a creepy sky
-            sky->draw(framebufferWidth, framebufferHeight, cameraToWorldMatrix.data, projectionMatrix[eye].inverse().data, &light.x);
+            // sky->draw(framebufferWidth, framebufferHeight, cameraToWorldMatrix.data, projectionMatrix[eye].inverse().data, &light.x);
 
             glDepthRange(0.0, 0.9);
             // transparent objects should be draw at last, from back to front
-            helloText->draw(_projMat, _viewMat);
+            helloText->draw();
             pMesh->render(viewProjectionMatrix);
             glDepthRange(0.0, 1.0);
 
@@ -476,6 +489,8 @@ int main(const int argc, const char* argv[]) {
 
 	sphere->cleanup();
 	SAFE_DELETE(sphere);
+
+    delete sphereSky;
 
 	// Terminate AntTweakBar and GLFW
 	TwTerminate();

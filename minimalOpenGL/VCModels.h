@@ -154,7 +154,7 @@ public:
     void update(float elapsedTime);
     void alignToCamera(glm::vec3 viewDir, glm::vec3 worldUp);
     void setLeapPosition(glm::vec3 pos);
-    void draw(const glm::mat4 &projMat, glm::mat4 &viewMat);
+    void draw();
 private:
     glm::vec4 m_leapPos;
 
@@ -171,7 +171,7 @@ public:
         const std::vector<std::string> &_uniformNames, GLuint _option = VCCH3D_OPTION);
     ~VCCh3D() {}
     void update(float elapsedTime);
-    void draw(const glm::mat4 &projMat, glm::mat4 &viewMat);
+    void draw();
 };
 
 
@@ -187,7 +187,7 @@ public:
         const std::string& _texSuffix, GLuint _option = VCPSMODEL_OPTION);
     ~VCPSModel() {}
     void update(float elapsedTime);
-    void draw(const glm::mat4 &projMat, glm::mat4 &viewMat);
+    void draw();
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -200,4 +200,17 @@ public:
         const float* projectionMatrixInverse, const float* light);
 private:
     GLuint m_vao;
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////
+const GLuint SPHERE_SKY_OPTION = VC_POS;
+class SphereSky : public VCWVObjModel {
+public:
+    SphereSky(const std::map<std::string, GLenum> &_shaderPaths,
+        const std::vector<std::string> &_uniformNames,
+        const std::string& _sphereObjPath);
+    ~SphereSky(){}
+    void draw();
+private:
+
 };

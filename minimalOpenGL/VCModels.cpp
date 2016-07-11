@@ -41,7 +41,7 @@ VCModel::initShaderProg()
     for (auto i : m_shaderPaths) {
         GLuint shader = glCreateShader(i.second);
         if (!CreateShaderFromFile(i.first.c_str(), shader)) {
-            std::cout << "Loading simple_model.vert failed " << std::endl;
+            std::cerr << "Loading shader " << i.first << " failed " << std::endl;
             return false;
         }
         glAttachShader(m_shaderProg, shader);
@@ -433,11 +433,11 @@ VCText2D::setLeapPosition(glm::vec3 pos)
 }
 
 void
-VCText2D::draw(const glm::mat4 &projMat, glm::mat4 &viewMat)
+VCText2D::draw()
 {
     assert(glGetError() == GL_NONE);
 
-    glm::mat4 mvp = projMat * viewMat * modelMat();
+    glm::mat4 mvp = ENV_VAR.projMat * ENV_VAR.viewMat * modelMat();
     // printMat4(mvp, "MVP");
     glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
@@ -481,10 +481,10 @@ VCCh3D::update(float elapsedTime)
 }
 
 void
-VCCh3D::draw(const glm::mat4 &projMat, glm::mat4 &viewMat)
+VCCh3D::draw()
 {
     glm::mat4 mm = modelMat();
-    glm::mat4 mvp = projMat * viewMat *mm;
+    glm::mat4 mvp = ENV_VAR.projMat * ENV_VAR.viewMat *mm;
     glm::mat3 nm = normalMat();
 
     glDepthMask(GL_TRUE);
@@ -497,8 +497,8 @@ VCCh3D::draw(const glm::mat4 &projMat, glm::mat4 &viewMat)
     glUniformMatrix4fv(m_uniformLocs["modelMat"], 1, GL_FALSE, &mm[0][0]);
     glUniformMatrix4fv(m_uniformLocs["MVP"], 1, GL_FALSE, &mvp[0][0]);
     glUniformMatrix3fv(m_uniformLocs["normalMat"], 1, GL_FALSE, &nm[0][0]);
-    glUniform3fv(m_uniformLocs["camPos"], 1, &camPos[0]);
-    glm::vec3 lightPos = glm::vec3(0.f, 1.f, 0.f) + camPos;
+    glUniform3fv(m_uniformLocs["camPos"], 1, &ENV_VAR.camPos[0]);
+    glm::vec3 lightPos = glm::vec3(0.f, 1.f, 0.f) + ENV_VAR.camPos;
     glUniform3fv(m_uniformLocs["lightPos"], 1, &lightPos[0]);
 
     for (auto grp : m_groups) {
@@ -533,10 +533,10 @@ VCPSModel::update(float elapsedTime)
 }
 
 void
-VCPSModel::draw(const glm::mat4 &projMat, glm::mat4 &viewMat)
+VCPSModel::draw()
 {
     glm::mat4 mm = modelMat();
-    glm::mat4 mvp = projMat * viewMat *mm;
+    glm::mat4 mvp = ENV_VAR.projMat * ENV_VAR.viewMat *mm;
     glm::mat3 nm = normalMat();
 
     glDepthMask(GL_TRUE);
@@ -549,8 +549,8 @@ VCPSModel::draw(const glm::mat4 &projMat, glm::mat4 &viewMat)
     glUniformMatrix4fv(m_uniformLocs["modelMat"], 1, GL_FALSE, &mm[0][0]);
     glUniformMatrix4fv(m_uniformLocs["MVP"], 1, GL_FALSE, &mvp[0][0]);
     glUniformMatrix3fv(m_uniformLocs["normalMat"], 1, GL_FALSE, &nm[0][0]);
-    glUniform3fv(m_uniformLocs["camPos"], 1, &camPos[0]);
-    glm::vec3 lightPos = glm::vec3(0.f, 1.f, 0.f) + camPos;
+    glUniform3fv(m_uniformLocs["camPos"], 1, &ENV_VAR.camPos[0]);
+    glm::vec3 lightPos = glm::vec3(0.f, 1.f, 0.f) + ENV_VAR.camPos;
     glUniform3fv(m_uniformLocs["lightPos"], 1, &lightPos[0]);
 
     for (auto grp : m_groups) {
@@ -588,4 +588,36 @@ Sky::draw(int windowWidth, int windowHeight, const float* cameraToWorldMatrix,
     glUniformMatrix4fv(m_uniformLocs["cameraToWorldMatrix"], 1, GL_TRUE, cameraToWorldMatrix);
     glUniformMatrix4fv(m_uniformLocs["invProjectionMatrix"], 1, GL_TRUE, projectionMatrixInverse);
     glDrawArrays(GL_TRIANGLES, 0, 3);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+SphereSky::SphereSky(const std::map<std::string, GLenum> &_shaderPaths,
+    const std::vector<std::string> &_uniformNames,
+    const std::string& _sphereObjPath) :
+    VCWVObjModel(_sphereObjPath, _shaderPaths, _uniformNames, SPHERE_SKY_OPTION)
+{
+
+}
+
+void
+SphereSky::draw()
+{
+    assert(glGetError() == GL_NONE);
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    glUseProgram(m_shaderProg);
+    glm::mat4 mvp = ENV_VAR.projMat * ENV_VAR.viewMat *modelMat();
+    glUniformMatrix4fv(m_uniformLocs["MVP"], 1, GL_FALSE, &mvp[0][0]);
+    for (auto grp : m_groups) {
+        for (auto mtlGrp : grp->m_mtlGroups) {
+            glBindVertexArray(mtlGrp->m_vao);
+            setupMtlUniforms(mtlGrp); // for SPHERE_SKY_OPTION this line is actually not necessary
+            glActiveTexture(GL_TEXTURE0);
+            ENV_VAR.envMap.bind();
+            glDrawArrays(GL_TRIANGLES, 0, mtlGrp->m_numVert);
+        }
+    }
+    assert(glGetError() == GL_NONE);
+
 }
