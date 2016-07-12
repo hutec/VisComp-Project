@@ -4,6 +4,24 @@
 #include "GL/glew.h"
 #include <GLFW/glfw3.h>
 #include <glm.hpp>
+#include <string>
+#include <vector>
+#include "OGLTexture.h"
+
+class VCModel;
+
+struct EnvVar {
+    glm::vec3 camPos;
+    OGLTexture envMap;
+    glm::mat4 viewMat;
+    glm::mat4 projMat;
+    std::vector<VCModel *> scene;
+};
+
+extern EnvVar ENV_VAR;
+
+void printMat4(glm::mat4 m, std::string matName = "");
+void printVec3(glm::vec3 v, std::string vecName = "");
 
 //OpenGL utility functions
 bool CreateShaderFromFile(const char* Path, GLhandleARB shader);

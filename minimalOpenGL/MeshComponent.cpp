@@ -72,7 +72,7 @@ bool CMeshComponent::loadShader(char* frag_shader_path, char* vert_shader_path)
 	}
 
 	// Get a handle for the model uniform
-	matVP_ID = glGetUniformLocationARB(modelProgram, "matVP");
+	matVP_ID = glGetUniformLocationARB(modelProgram, "MVP");
 	diffuseID = glGetUniformLocation(modelProgram, "diffuse");
 	leapPos_ID = glGetUniformLocation(modelProgram, "leappos");
 

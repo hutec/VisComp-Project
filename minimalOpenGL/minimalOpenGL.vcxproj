@@ -159,8 +159,10 @@
     <ClCompile Include="helper\rgbe.cpp" />
     <ClCompile Include="helper\stbi_image\stb_image.c" />
     <ClCompile Include="helper\wavefront_obj_loader\GLMmodel.cpp" />
+    <ClCompile Include="LeapHandler.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MeshComponent.cpp" />
+    <ClCompile Include="VCModels.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="helper\GLCommon.h" />
@@ -173,6 +175,7 @@
     <ClInclude Include="MeshComponent.h" />
     <ClInclude Include="minimalOpenGL.h" />
     <ClInclude Include="minimalOpenVR.h" />
+    <ClInclude Include="VCModels.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="min.pix" />

@@ -3,6 +3,33 @@
 
 using namespace std;
 
+EnvVar ENV_VAR;
+
+void
+printMat4(glm::mat4 m, std::string matName)
+{
+    std::cout << matName << std::endl;
+    for (int i = 0; i < 4; ++i) {
+        std::cout << "col " << i << ": ( " << std::flush;
+        for (int j = 0; j < 4; ++j) {
+            std::cout << m[i][j] << " " << std::flush;
+        }
+        std::cout << ")" << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+void 
+printVec3(glm::vec3 v, std::string vecName)
+{
+    std::cout << vecName << ": ( " << std::flush;
+    for (int j = 0; j < 2; ++j) {
+        std::cout << v[j] << ", " << std::flush;
+    }
+    std::cout << v[2] << ")" << std::endl;
+    std::cout << std::endl;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //OpenGL utility functions
 
@@ -53,6 +80,13 @@ bool CreateShaderFromFile(const char* Path, GLhandleARB shader)
 
 	if(!CompileGLSLShader(shader))
 	{
+        GLint gl_LogLength;
+        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &gl_LogLength);
+        GLchar* gl_InfoLogBuffer = new GLchar[gl_LogLength];
+        glGetShaderInfoLog(shader, gl_LogLength, NULL, gl_InfoLogBuffer);
+        std::string error_msg = std::string(gl_InfoLogBuffer);
+        delete gl_InfoLogBuffer;
+
 		delete [] sourceCode;
 		cout<<"Failed to compile shader: "<<Path<<endl;
 		return false;

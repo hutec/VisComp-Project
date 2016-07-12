@@ -61,6 +61,7 @@
 #include "helper\MatrixConvertions.h"
 #include "Leap.h"
 #include "LeapHandler.h"
+#include "VCModels.h"
 
 #ifdef _VR
 #   include "minimalOpenVR.h"
@@ -69,6 +70,17 @@
 GLFWwindow* window = nullptr;
 CMeshComponent* pMesh = nullptr;
 CMeshComponent* sphere = nullptr;
+
+VCText2D *helloText = nullptr;
+VCCh3D *chH = nullptr;
+VCCh3D *sphereModel = nullptr;
+VCPSModel *headModel = nullptr;
+VCPSModel *stickModel = nullptr;
+VCPSModel *dollModel = nullptr;
+Sky *sky = nullptr;
+SphereSky *sphereSky = nullptr;
+// break the sphere at (-1, 0, 0), to make the seam gone
+SkySphere *skySphere = nullptr;
 
 #ifdef _VR
     vr::IVRSystem* hmd = nullptr;
@@ -91,7 +103,7 @@ inline void TwEventCharGLFW3(GLFWwindow* window, int codepoint) { TwEventCharGLF
 
 
 int main(const int argc, const char* argv[]) {
-    std::cout << "Minimal OpenGL 4.1 Example by Morgan McGuire\n\nW, A, S, D, C, Z keys to translate\nMouse click and drag to rotate\nESC to quit\n\n";
+    std::cout << "Minimal OpenGL 4.3 Example by Morgan McGuire\n\nW, A, S, D, C, Z keys to translate\nMouse click and drag to rotate\nESC to quit\n\n";
     std::cout << std::fixed;
 
 	//Leap Stuff
@@ -162,17 +174,108 @@ int main(const int argc, const char* argv[]) {
 	pMesh->init(
 		"assets/quad.obj",
 		"assets/hello.png", 
-		"simple_model.frag" , 
-		"simple_model.vert"
+		"shaders/simple_model.frag" , 
+		"shaders/simple_model.vert"
 		);
 
 	sphere = new CMeshComponent();
 	sphere->init(
 		"assets/sphere.obj",
 		"assets/generator_diffuse.jpg",
-		"simple_model.frag",
-		"simple_model.vert"
+		"shaders/simple_model.frag",
+		"shaders/simple_model.vert"
 	);
+
+    std::string _objPath{ "assets/quad.obj" };
+    std::map<std::string, GLenum> _shaderPaths;
+    _shaderPaths["shaders/simple_model.vert"] = GL_VERTEX_SHADER;
+    _shaderPaths["shaders/simple_model.frag"] = GL_FRAGMENT_SHADER;
+    std::vector<std::string> _uniformNames = { "MVP", "leappos" };
+    std::string _texPath{ "assets/hello.png" };
+    helloText = new VCText2D(_objPath, _shaderPaths, _uniformNames, _texPath);
+    ENV_VAR.scene.push_back(helloText);
+    helloText->translate(glm::vec3(0.f, 3.f, 0.f));
+
+    _shaderPaths.clear();
+    _shaderPaths["shaders/sky.vert"] = GL_VERTEX_SHADER;
+    _shaderPaths["shaders/sky.frag"] = GL_FRAGMENT_SHADER;
+    _uniformNames = { "light", "resolution", "cameraToWorldMatrix", "invProjectionMatrix" };
+    sky = new Sky(_shaderPaths, _uniformNames);
+
+    _objPath = std::string("assets/text_H.obj");
+    _shaderPaths.clear();
+    _shaderPaths["shaders/Ch3D.vert"] = GL_VERTEX_SHADER;
+    _shaderPaths["shaders/Ch3D.frag"] = GL_FRAGMENT_SHADER;
+    // uniform names "diffuse", "specular", "shininess", "emmissive", "ambient" in shader
+    // are used exclusively for data read from .mtl file if corresponding options 
+    // are turned on. More details in the definition of class VCWVObjModel
+    _uniformNames = { "MVP", "ModelMat", "normalMat", "camPos", "lightPos",
+        "diffuse", "specular", "shininess" };
+    chH = new VCCh3D(_objPath, _shaderPaths, _uniformNames);
+    ENV_VAR.scene.push_back(chH);
+    chH->translate(glm::vec3(0.f, 3.f, -5.f));
+
+    _objPath = std::string("assets/sphere.obj");
+    sphereModel = new VCCh3D(_objPath, _shaderPaths, _uniformNames);
+    ENV_VAR.scene.push_back(sphereModel);
+    sphereModel->translate(glm::vec3(3.f, 0.f, 1.f));
+
+
+    ENV_VAR.envMap.load("assets/envMap.jpg");
+    _shaderPaths.clear();
+    _shaderPaths["shaders/sphere_sky.vert"] = GL_VERTEX_SHADER;
+    _shaderPaths["shaders/sphere_sky.tes"] = GL_TESS_EVALUATION_SHADER;
+    _shaderPaths["shaders/sphere_sky.frag"] = GL_FRAGMENT_SHADER;
+    _uniformNames = {"MVP"};
+    sphereSky = new SphereSky(_shaderPaths, _uniformNames, _objPath);
+    ENV_VAR.scene.push_back(sphereSky);
+    sphereSky->scale(glm::vec3(30));
+
+    _shaderPaths.clear();
+    _shaderPaths["shaders/sphere_sky.vert"] = GL_VERTEX_SHADER;
+    _shaderPaths["shaders/sky_sphere.tes"] = GL_TESS_EVALUATION_SHADER;
+    _shaderPaths["shaders/sphere_sky.frag"] = GL_FRAGMENT_SHADER;
+    skySphere = new SkySphere(_shaderPaths, _uniformNames);
+    ENV_VAR.scene.push_back(skySphere);
+    skySphere->scale(glm::vec3(60));
+
+// #define HEAD_MODEL
+// #define STICK_MODEL
+// #define DOLL_MODEL
+
+    _objPath = std::string("assets/head_full_tex.obj");
+    _shaderPaths.clear();
+    _shaderPaths["shaders/ps_model.vert"] = GL_VERTEX_SHADER;
+    _shaderPaths["shaders/ps_model.frag"] = GL_FRAGMENT_SHADER;
+    _uniformNames = { "MVP", "ModelMat", "normalMat", "camPos", "lightPos" };
+
+#ifdef HEAD_MODEL
+    headModel = new VCPSModel(_objPath, _shaderPaths, _uniformNames, ".png");
+    ENV_VAR.scene.push_back(headModel);
+    headModel->scale(glm::vec3(5.f));
+    headModel->translate(glm::vec3(-3.f, 0.f, 0.f));
+#endif
+
+    _objPath = std::string("assets/stick_1_low.obj");
+
+#ifdef STICK_MODEL
+    stickModel = new VCPSModel(_objPath, _shaderPaths, _uniformNames, ".jpg");
+    ENV_VAR.scene.push_back(stickModel);
+    stickModel->scale(glm::vec3(5.f));
+    stickModel->rotate(M_PI / 3.5f, glm::vec3(1.f, 0.f, 0.f));
+    stickModel->translate(glm::vec3(0.f, 0.f, -4.f));
+#endif
+
+    _objPath = std::string("assets/doll.obj");
+
+#ifdef DOLL_MODEL
+    dollModel = new VCPSModel(_objPath, _shaderPaths, _uniformNames, ".jpg");
+    ENV_VAR.scene.push_back(dollModel);
+    dollModel->scale(glm::vec3(5.f));
+    dollModel->translate(glm::vec3(1.f, 2.f, 0.f));
+    dollModel->rotate(-M_PI, glm::vec3(1.f, 0.f, 0.f));
+#endif
+
     Vector3 bodyTranslation(0.0f, 1.6f, 5.0f);
     Vector3 bodyRotation;
 
@@ -225,7 +328,7 @@ int main(const int argc, const char* argv[]) {
 		Leap::Vector palmVelocity = processMovement(controller.frame());
 
         const float nearPlaneZ = -0.1f;
-        const float farPlaneZ = -100.0f;
+        const float farPlaneZ = -1000.0f;
         const float verticalFieldOfView = 45.0f * PI / 180.0f;
 
         Matrix4x4 eyeToHead[numEyes], projectionMatrix[numEyes], headToBodyMatrix;
@@ -255,34 +358,83 @@ int main(const int argc, const char* argv[]) {
 		sphere->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
 		sphere->moveTo(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
 
+
+        helloText->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
 		// update the scene
 		//pMesh->update(dt);
+        //helloText->update(dt);
+        chH->update(dt);
+        // sphereModel->update(dt); // no visual effect
+        // headModel->update(dt);
+        // stickModel->update(dt);
+        // dollModel->update(dt);
+
 		glm::vec4 viewDirWS = Matrix4x4ToGLM(headToWorldMatrix) * glm::vec4(0.0f, 0.0f, 100.0f, 1.0f);
 		pMesh->alignToCamera(glm::vec3(viewDirWS.x, viewDirWS.y, viewDirWS.z), glm::vec3(0.0f, 1.0f, 0.0f));
-
+        glm::vec3 headPos(Matrix4x4ToGLM(headToWorldMatrix) * glm::vec4(0.f, 0.f, 0.f, 1.f));
+        glm::vec3 camUp(glm::vec4(0.f, 1.f, 0.f, 0.f));
+        helloText->alignToCamera(headPos, camUp);
 		// Draw the scene twice; for both eyes
         for (int eye = 0; eye < numEyes; ++eye) 
 		{
+            const Matrix4x4& cameraToWorldMatrix = headToWorldMatrix * eyeToHead[eye];
+
+            const Vector3& light = Vector3(1.0f, 0.5f, 0.2f).normalize();
+
+            const Matrix4x4 viewProjectionMatrix4x4 = projectionMatrix[eye] * cameraToWorldMatrix.inverse();
+            glm::mat4 viewProjectionMatrix = Matrix4x4ToGLM(viewProjectionMatrix4x4);
+
+            glm::mat4 _viewMat = Matrix4x4ToGLM(cameraToWorldMatrix.inverse());
+            glm::mat4 _view2WorldMat = Matrix4x4ToGLM(cameraToWorldMatrix);
+            glm::mat4 _projMat = Matrix4x4ToGLM(projectionMatrix[eye]);
+
+            ENV_VAR.camPos = glm::vec3(_view2WorldMat * glm::vec4(0.f, 0.f, 0.f, 1.f));
+            ENV_VAR.projMat = _projMat;
+            ENV_VAR.viewMat = _viewMat;
+
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer[eye]);
             glViewport(0, 0, framebufferWidth, framebufferHeight);
 
             glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-            const Matrix4x4& cameraToWorldMatrix = headToWorldMatrix * eyeToHead[eye];
-
-            const Vector3& light = Vector3(1.0f, 0.5f, 0.2f).normalize();			
-
             // Draw the background
-            drawSky(framebufferWidth, framebufferHeight, nearPlaneZ, farPlaneZ, cameraToWorldMatrix.data, projectionMatrix[eye].inverse().data, &light.x);
+            // drawSky(framebufferWidth, framebufferHeight, nearPlaneZ, farPlaneZ, cameraToWorldMatrix.data, projectionMatrix[eye].inverse().data, &light.x);
 
 			// Draw the mesh
-			const Matrix4x4 viewProjectionMatrix4x4 = projectionMatrix[eye] * cameraToWorldMatrix.inverse();
-			glm::mat4 viewProjectionMatrix = Matrix4x4ToGLM(viewProjectionMatrix4x4);
-			
-			pMesh->render(viewProjectionMatrix);
-			sphere->render(viewProjectionMatrix);
+            glDepthRange(0, 0.9);
+            assert(glGetError() == GL_NONE);
+            sphere->render(viewProjectionMatrix);
+
+            chH->draw();
+            // sphereSky->draw();
+            skySphere->draw();
+#ifdef HEAD_MODEL
+            headModel->draw();
+#endif
+
+#ifdef STICK_MODEL
+            stickModel->draw();
+#endif
+
+#ifdef DOLL_MODEL
+            dollModel->draw();
+#endif
+
+            sphereModel->draw();
+
+            assert(glGetError() == GL_NONE);
+
+            glDepthRange(0.9, 1.0);
+            // Using glDepthRange to force the background stay behind other objects
+            // it's really a creepy sky
+            // sky->draw(framebufferWidth, framebufferHeight, cameraToWorldMatrix.data, projectionMatrix[eye].inverse().data, &light.x);
+
+            glDepthRange(0.0, 0.9);
+            // transparent objects should be draw at last, from back to front
+            helloText->draw();
+            pMesh->render(viewProjectionMatrix);
+            glDepthRange(0.0, 1.0);
 
 			// Draw the Anttweakbar UI
 			// TwDraw();
@@ -337,7 +489,11 @@ int main(const int argc, const char* argv[]) {
         if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_D)) { bodyTranslation += Vector3(headToWorldMatrix * Vector4(+cameraMoveSpeed, 0, 0, 0)); }
         if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_C)) { bodyTranslation.y -= cameraMoveSpeed; }
         if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_SPACE)) || (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_Z))) { bodyTranslation.y += cameraMoveSpeed; }
-
+        if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F5))) {
+            for (auto i : ENV_VAR.scene) {
+                i->initShaderProg();
+            }
+        }
         // Keep the camera above the ground
         if (bodyTranslation.y < 0.01f) { bodyTranslation.y = 0.01f; }
 
@@ -375,6 +531,8 @@ int main(const int argc, const char* argv[]) {
 
 	sphere->cleanup();
 	SAFE_DELETE(sphere);
+
+    delete sphereSky;
 
 	// Terminate AntTweakBar and GLFW
 	TwTerminate();
