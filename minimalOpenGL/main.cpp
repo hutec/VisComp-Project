@@ -106,12 +106,6 @@ int main(const int argc, const char* argv[]) {
     std::cout << "Minimal OpenGL 4.3 Example by Morgan McGuire\n\nW, A, S, D, C, Z keys to translate\nMouse click and drag to rotate\nESC to quit\n\n";
     std::cout << std::fixed;
 
-	//Leap Stuff
-	Leap::Controller controller;
-	controller.enableGesture(Leap::Gesture::TYPE_SWIPE);
-	std::cout << "Leap controller connected" << std::endl;
-	// End Leap Stuff
-
     uint32_t framebufferWidth = 1280, framebufferHeight = 720;
 #   ifdef _VR
         const int numEyes = 2;
@@ -322,11 +316,6 @@ int main(const int argc, const char* argv[]) {
 	{
         assert(glGetError() == GL_NONE);
 
-		//int movement = processFrame(controller.frame());
-
-		// Divide by 10000 for normalization
-		Leap::Vector palmVelocity = processMovement(controller.frame());
-
         const float nearPlaneZ = -0.1f;
         const float farPlaneZ = -1000.0f;
         const float verticalFieldOfView = 45.0f * PI / 180.0f;
@@ -472,17 +461,8 @@ int main(const int argc, const char* argv[]) {
             glfwSetWindowShouldClose(window, 1);
         }
 
-		// Leap movement
-		if (!isHandClosed(controller.frame()) && !(GLFW_PRESS == glfwGetKey(window, GLFW_KEY_H))) {
-			bodyTranslation += Vector3(headToWorldMatrix * Vector4(palmVelocity.x / 10000, 0, 0, 0));
-			bodyTranslation += Vector3(headToWorldMatrix * Vector4(0, palmVelocity.y / 10000, 0, 0));
-			bodyTranslation += Vector3(headToWorldMatrix * Vector4(0, 0, palmVelocity.z / 10000, 0));
-		}
-
-		const float cameraMoveSpeed = 0.01f;
-
         // WASD keyboard movement
-        //const float cameraMoveSpeed = 0.01f;
+        const float cameraMoveSpeed = 0.01f;
         if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_W)) { bodyTranslation += Vector3(headToWorldMatrix * Vector4(0, 0, -cameraMoveSpeed, 0)); }
         if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_S)) { bodyTranslation += Vector3(headToWorldMatrix * Vector4(0, 0, +cameraMoveSpeed, 0)); }
         if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_A)) { bodyTranslation += Vector3(headToWorldMatrix * Vector4(-cameraMoveSpeed, 0, 0, 0)); }
