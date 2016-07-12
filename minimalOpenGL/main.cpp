@@ -223,8 +223,12 @@ int main(const int argc, const char* argv[]) {
     _uniformNames = {"MVP"};
     sphereSky = new SphereSky(_shaderPaths, _uniformNames, _objPath);
     ENV_VAR.scene.push_back(sphereSky);
-    sphereSky->scale(glm::vec3(50));
+    sphereSky->scale(glm::vec3(30));
 
+    _shaderPaths.clear();
+    _shaderPaths["shaders/sphere_sky.vert"] = GL_VERTEX_SHADER;
+    _shaderPaths["shaders/sky_sphere.tes"] = GL_TESS_EVALUATION_SHADER;
+    _shaderPaths["shaders/sphere_sky.frag"] = GL_FRAGMENT_SHADER;
     skySphere = new SkySphere(_shaderPaths, _uniformNames);
     ENV_VAR.scene.push_back(skySphere);
     skySphere->scale(glm::vec3(60));

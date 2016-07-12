@@ -2,14 +2,16 @@
 
 uniform mat4 MVP;
 
-layout (triangles, equal_spacing, ccw) in;
+layout (quads, equal_spacing, ccw) in;
 
 out vec2 tesTexCoord;
 
-vec4 calcPos(float a, float b, float c)
+vec4 calcPos()
 {
     float radius = 1.0;
-    vec3 p = vec3(a * gl_in[0].gl_Position + b * gl_in[1].gl_Position + c * gl_in[2].gl_Position);
+    vec4 mid1 = mix(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_TessCoord.x);
+    vec4 mid2 = mix(gl_in[2].gl_Position, gl_in[3].gl_Position, gl_TessCoord.x);
+    vec3 p = vec3(mix(mid1, mid2, gl_TessCoord.y));
     vec3 normal = normalize(p);
     return vec4(radius * normal, 1.0);
 }
@@ -18,7 +20,7 @@ void main(void)
 {
     float M_PI = atan(1.0) * 4.0;
     
-    vec4 pos = calcPos(gl_TessCoord.x, gl_TessCoord.y, gl_TessCoord.z);
+    vec4 pos = calcPos();
     gl_Position = MVP * pos;
     
     vec3 dir = normalize(pos.xyz);
