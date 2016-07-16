@@ -303,7 +303,16 @@ VCWVObjModel::setupMtlUniforms(VCMtlGroup* _mtlGrp)
     if (m_option & VC_KS_MAP) {
         glActiveTexture(GL_TEXTURE0 + texBindingLoc);
         m_texes[_mtlGrp->m_mtlName][texBindingLoc]->bind();
+		++texBindingLoc;
     }
+
+	// Check if there is a enhanced texture 
+	if (texBindingLoc < m_texes[_mtlGrp->m_mtlName].size()) {
+		glActiveTexture(GL_TEXTURE3);
+		m_texes[_mtlGrp->m_mtlName][texBindingLoc]->bind();
+		//glUniform1i(m_uniformLocs["enhanced_texture"], 1);
+	}
+
     assert(glGetError() == GL_NONE);
 }
 
@@ -312,7 +321,8 @@ VCWVObjModel::setupTexForAllMtls(const std::string& _texName)
 {
     for (auto i : m_groups) {
         for (auto j : i->m_mtlGroups) {
-            if (m_texes.find(j->m_mtlName) == m_texes.end()) {
+            //if (m_texes.find(j->m_mtlName) == m_texes.end()) {
+			if (true) {
                 std::string texName = _texName;
                 std::unique_ptr<OGLTexture> texPtr(new OGLTexture());
                 char *texNameCstr = new char[texName.length() + 1];
@@ -327,6 +337,7 @@ VCWVObjModel::setupTexForAllMtls(const std::string& _texName)
                 // m_texes[j->m_mtlName] = texVector;
                 
                 std::cout << "added texture " << texName << " for " << j->m_mtlName << std::endl;
+				std::cout << "Texture size: " << m_texes[j->m_mtlName].size() << std::endl;
             }
         }
     }
@@ -362,6 +373,24 @@ VCWVObjModel::autoSetupTexForMtls(const std::string &_objPath, const std::string
         }
     }
 }
+
+void
+VCWVObjModel::setEnhancedTexture(const std::string& _texName)
+{
+	setupTexForAllMtls(_texName);
+}
+
+void
+VCWVObjModel::setLeapPosition(glm::vec3 pos)
+{
+	//TODO this is far from optimal, try to remap the hand positions
+	for (int i = 0; i < 3; ++i) {
+		pos[i] = std::max(0.f, std::min(std::abs(pos[i]), 255.f)) / 255.f;
+	}
+	m_leapPos = glm::vec4(pos.x, pos.y, pos.z, 1);
+}
+
+
 
 VCWVObjModel::~VCWVObjModel()
 {
@@ -422,16 +451,6 @@ VCText2D::alignToCamera(glm::vec3 camPos, glm::vec3 worldUp)
     rotate(theta, axis);
 }
 
-void 
-VCText2D::setLeapPosition(glm::vec3 pos)
-{
-    //TODO this is far from optimal, try to remap the hand positions
-    for (int i = 0; i < 3; ++i) {
-        pos[i] = std::max(0.f, std::min(std::abs(pos[i]), 255.f)) / 255.f;
-    }
-    m_leapPos = glm::vec4(pos.x, pos.y, pos.z, 1);
-}
-
 void
 VCText2D::draw()
 {
@@ -457,7 +476,7 @@ VCText2D::draw()
         for (auto mtlGrp : grp->m_mtlGroups) {
             glBindVertexArray(mtlGrp->m_vao);
             setupMtlUniforms(mtlGrp);
-            glDrawArrays(GL_TRIANGLES, 0, mtlGrp->m_numVert);
+			glDrawArrays(GL_TRIANGLES, 0, mtlGrp->m_numVert);
         }
     }
     assert(glGetError() == GL_NONE);
@@ -552,6 +571,9 @@ VCPSModel::draw()
     glUniform3fv(m_uniformLocs["camPos"], 1, &ENV_VAR.camPos[0]);
     glm::vec3 lightPos = glm::vec3(0.f, 1.f, 0.f) + ENV_VAR.camPos;
     glUniform3fv(m_uniformLocs["lightPos"], 1, &lightPos[0]);
+
+	glUniform4fv(m_uniformLocs["leapPos"], 1, &m_leapPos[0]);
+
 
     for (auto grp : m_groups) {
         for (auto mtlGrp : grp->m_mtlGroups) {

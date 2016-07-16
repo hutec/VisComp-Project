@@ -68,8 +68,6 @@
 #endif
 
 GLFWwindow* window = nullptr;
-CMeshComponent* pMesh = nullptr;
-CMeshComponent* sphere = nullptr;
 
 VCText2D *helloText = nullptr;
 VCCh3D *chH = nullptr;
@@ -164,29 +162,15 @@ int main(const int argc, const char* argv[]) {
 	glfwSetKeyCallback(window, (GLFWkeyfun)TwEventKeyGLFW3);
 	glfwSetCharCallback(window, (GLFWcharfun)TwEventCharGLFW3);
 
-	pMesh = new CMeshComponent();
-	pMesh->init(
-		"assets/quad.obj",
-		"assets/hello.png", 
-		"shaders/simple_model.frag" , 
-		"shaders/simple_model.vert"
-		);
-
-	sphere = new CMeshComponent();
-	sphere->init(
-		"assets/sphere.obj",
-		"assets/generator_diffuse.jpg",
-		"shaders/simple_model.frag",
-		"shaders/simple_model.vert"
-	);
-
     std::string _objPath{ "assets/quad.obj" };
     std::map<std::string, GLenum> _shaderPaths;
     _shaderPaths["shaders/simple_model.vert"] = GL_VERTEX_SHADER;
     _shaderPaths["shaders/simple_model.frag"] = GL_FRAGMENT_SHADER;
-    std::vector<std::string> _uniformNames = { "MVP", "leappos" };
+    std::vector<std::string> _uniformNames = { "MVP", "leappos", "enhanced_texture" };
     std::string _texPath{ "assets/hello.png" };
+	std::string _secondaryTexPath{ "assets/hello_enhanced.png" };
     helloText = new VCText2D(_objPath, _shaderPaths, _uniformNames, _texPath);
+	helloText->setEnhancedTexture(_secondaryTexPath);
     ENV_VAR.scene.push_back(helloText);
     helloText->translate(glm::vec3(0.f, 3.f, 0.f));
 
@@ -214,7 +198,6 @@ int main(const int argc, const char* argv[]) {
     ENV_VAR.scene.push_back(sphereModel);
     sphereModel->translate(glm::vec3(3.f, 0.f, 1.f));
 
-
     ENV_VAR.envMap.load("assets/envMap.jpg");
     _shaderPaths.clear();
     _shaderPaths["shaders/sphere_sky.vert"] = GL_VERTEX_SHADER;
@@ -234,14 +217,14 @@ int main(const int argc, const char* argv[]) {
     skySphere->scale(glm::vec3(60));
 
 // #define HEAD_MODEL
-// #define STICK_MODEL
+#define STICK_MODEL
 // #define DOLL_MODEL
 
     _objPath = std::string("assets/head_full_tex.obj");
     _shaderPaths.clear();
     _shaderPaths["shaders/ps_model.vert"] = GL_VERTEX_SHADER;
     _shaderPaths["shaders/ps_model.frag"] = GL_FRAGMENT_SHADER;
-    _uniformNames = { "MVP", "ModelMat", "normalMat", "camPos", "lightPos" };
+    _uniformNames = { "MVP", "ModelMat", "normalMat", "camPos", "lightPos", "leapPos" };
 
 #ifdef HEAD_MODEL
     headModel = new VCPSModel(_objPath, _shaderPaths, _uniformNames, ".png");
@@ -254,6 +237,8 @@ int main(const int argc, const char* argv[]) {
 
 #ifdef STICK_MODEL
     stickModel = new VCPSModel(_objPath, _shaderPaths, _uniformNames, ".jpg");
+	std::string _epath{ "assets/stick_1_low_enhanced.jpg" };
+	stickModel->setEnhancedTexture(_epath);
     ENV_VAR.scene.push_back(stickModel);
     stickModel->scale(glm::vec3(5.f));
     stickModel->rotate(M_PI / 3.5f, glm::vec3(1.f, 0.f, 0.f));
@@ -338,14 +323,14 @@ int main(const int argc, const char* argv[]) {
         const Matrix4x4& headToWorldMatrix = bodyToWorldMatrix * headToBodyMatrix;
 
 
-		//Leap::Vector palmVelocity = getPalmVelocity(controller.frame());
-		//pMesh->rotate(glm::vec3(palmVelocity.x, palmVelocity.y, palmVelocity.z));
 
+		Leap::Vector palmVelocity = getPalmVelocity(controller.frame());
 		Leap::Vector palmPosition = getPalmPosition(controller.frame());
-		pMesh->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
-		
+
+		/*pMesh->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
+		pMesh->rotate(glm::vec3(palmVelocity.x, palmVelocity.y, palmVelocity.z));
 		sphere->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
-		sphere->moveTo(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
+		sphere->moveTo(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));*/
 
 
         helloText->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
@@ -359,7 +344,7 @@ int main(const int argc, const char* argv[]) {
         // dollModel->update(dt);
 
 		glm::vec4 viewDirWS = Matrix4x4ToGLM(headToWorldMatrix) * glm::vec4(0.0f, 0.0f, 100.0f, 1.0f);
-		pMesh->alignToCamera(glm::vec3(viewDirWS.x, viewDirWS.y, viewDirWS.z), glm::vec3(0.0f, 1.0f, 0.0f));
+		//pMesh->alignToCamera(glm::vec3(viewDirWS.x, viewDirWS.y, viewDirWS.z), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::vec3 headPos(Matrix4x4ToGLM(headToWorldMatrix) * glm::vec4(0.f, 0.f, 0.f, 1.f));
         glm::vec3 camUp(glm::vec4(0.f, 1.f, 0.f, 0.f));
         helloText->alignToCamera(headPos, camUp);
@@ -393,8 +378,6 @@ int main(const int argc, const char* argv[]) {
 			// Draw the mesh
             glDepthRange(0, 0.9);
             assert(glGetError() == GL_NONE);
-            sphere->render(viewProjectionMatrix);
-
             chH->draw();
             // sphereSky->draw();
             skySphere->draw();
@@ -403,6 +386,7 @@ int main(const int argc, const char* argv[]) {
 #endif
 
 #ifdef STICK_MODEL
+			stickModel->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
             stickModel->draw();
 #endif
 
@@ -422,7 +406,6 @@ int main(const int argc, const char* argv[]) {
             glDepthRange(0.0, 0.9);
             // transparent objects should be draw at last, from back to front
             helloText->draw();
-            pMesh->render(viewProjectionMatrix);
             glDepthRange(0.0, 1.0);
 
 			// Draw the Anttweakbar UI
@@ -504,13 +487,6 @@ int main(const int argc, const char* argv[]) {
             vr::VR_Shutdown();
         }
 #   endif
-
-	// Relesee the vertex buffers, shader and textures
-	pMesh->cleanup();
-	SAFE_DELETE(pMesh);
-
-	sphere->cleanup();
-	SAFE_DELETE(sphere);
 
     delete sphereSky;
 

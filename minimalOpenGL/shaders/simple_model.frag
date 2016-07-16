@@ -1,6 +1,9 @@
 #version 430
 
 layout(binding = 0) uniform sampler2D diffuse;
+layout(binding = 2) uniform sampler2D texture_enhanced;
+
+
 in vec2 texcoords;
 uniform vec4 leappos;
 

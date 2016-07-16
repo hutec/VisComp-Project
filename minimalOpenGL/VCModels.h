@@ -44,6 +44,8 @@ protected:
     glm::vec3 m_scaleFactor;
     std::map<std::string, GLenum> m_shaderPaths;
     std::map<std::string, GLuint> m_uniformLocs;
+
+	OGLTexture enhanced_texture;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -118,6 +120,14 @@ public:
         const std::vector<std::string> &_uniformNames,
         GLuint _option, 
         const std::string& _texSuffix = std::string("")); 
+
+	// add a second texture that may be used for overlapping. it is set on GL_TEXTURE3
+	void setEnhancedTexture(const std::string& _texName);
+	
+	// set leap position
+	void setLeapPosition(glm::vec3 pos);
+
+
     ~VCWVObjModel();
 protected:
     std::vector<VCWVObjGroup *> m_groups;
@@ -137,7 +147,11 @@ protected:
     // if textures for both kd and ks are used, kd tex binding loc = 0, ks tex binding loc = 1
     virtual void setupTexForMtls() {}
 
+	glm::vec4 m_leapPos;
+
+
 private:
+
     void autoSetupTexForMtls(const std::string &_objPath, const std::string& _texSuffix);
 };
 
@@ -153,10 +167,9 @@ public:
     ~VCText2D() {}
     void update(float elapsedTime);
     void alignToCamera(glm::vec3 viewDir, glm::vec3 worldUp);
-    void setLeapPosition(glm::vec3 pos);
     void draw();
+
 private:
-    glm::vec4 m_leapPos;
 
     
 };
