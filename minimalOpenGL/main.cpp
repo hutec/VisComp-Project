@@ -116,6 +116,7 @@ int main(const int argc, const char* argv[]) {
     const int windowHeight = 720;
     const int windowWidth = (framebufferWidth * windowHeight) / framebufferHeight;
 
+
     window = initOpenGL(windowWidth, windowHeight, "minimalOpenGL");
 
 	// Send the new window size to AntTweakBar
@@ -197,6 +198,7 @@ int main(const int argc, const char* argv[]) {
     sphereModel = new VCCh3D(_objPath, _shaderPaths, _uniformNames);
     ENV_VAR.scene.push_back(sphereModel);
     sphereModel->translate(glm::vec3(3.f, 0.f, 1.f));
+	sphereModel->setScaleFactor(glm::vec3(0.1));
 
     ENV_VAR.envMap.load("assets/envMap.jpg");
     _shaderPaths.clear();
@@ -327,13 +329,22 @@ int main(const int argc, const char* argv[]) {
 		Leap::Vector palmVelocity = getPalmVelocity(controller.frame());
 		Leap::Vector palmPosition = getPalmPosition(controller.frame());
 
+		// used as origin for Leap coordinate system. 
+		glm::vec3 leapOffset = { 0.f, 0.f, -2.f }; //for Stick
+		//glm::vec3 leapOffset = { 0.f, 3.f, -5.f };
+		float leapHandDistance = 100.f; //Added before scaling
+		float leapScale = 80.f; //the larger the scale, the slower the gesture
+		glm::vec3 scaledPos = glm::vec3(palmPosition.x / leapScale, ((palmPosition.y - leapHandDistance) / leapScale), palmPosition.z / leapScale);
+		scaledPos += leapOffset;
+		//scaledPos.y -= leapHandDistance;
+
 		/*pMesh->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
 		pMesh->rotate(glm::vec3(palmVelocity.x, palmVelocity.y, palmVelocity.z));
 		sphere->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
 		sphere->moveTo(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));*/
 
 
-        helloText->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
+       // helloText->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
 		// update the scene
 		//pMesh->update(dt);
         //helloText->update(dt);
@@ -378,7 +389,7 @@ int main(const int argc, const char* argv[]) {
 			// Draw the mesh
             glDepthRange(0, 0.9);
             assert(glGetError() == GL_NONE);
-            chH->draw();
+            //chH->draw();
             // sphereSky->draw();
             skySphere->draw();
 #ifdef HEAD_MODEL
@@ -386,7 +397,8 @@ int main(const int argc, const char* argv[]) {
 #endif
 
 #ifdef STICK_MODEL
-			stickModel->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
+			//stickModel->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
+			stickModel->setLeapPosition(scaledPos);
             stickModel->draw();
 #endif
 
@@ -394,6 +406,11 @@ int main(const int argc, const char* argv[]) {
             dollModel->draw();
 #endif
 
+
+
+
+			//sphereModel->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
+			sphereModel->setTranslation(scaledPos);
             sphereModel->draw();
 
             assert(glGetError() == GL_NONE);

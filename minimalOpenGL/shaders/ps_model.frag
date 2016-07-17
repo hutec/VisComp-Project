@@ -23,10 +23,13 @@ vec3 lighting()
     vec3 R = reflect(-L, N);
     
 	vec3 texColor;
-	if (leapPos.y < 0.7) {
-		texColor = texture(diffuseTex, vsTexCoord).rgb;
-	} else {
+	vec3 leap = vec3(leapPos.x, leapPos.y, leapPos.z);
+
+	if (distance(leap, vsWorldPos) < .2f) {
+	//if (abs(leapPos.x - vsWorldPos.x) < .5f && abs(leapPos.y - vsWorldPos.y) < .5f) {
 		texColor = texture(enhancedTex, vsTexCoord).rgb;
+	} else {
+		texColor = texture(diffuseTex, vsTexCoord).rgb;
 	}
     vec3 diffuseLight = max(dot(N, L), 0.0) * texColor;
     return diffuseLight;

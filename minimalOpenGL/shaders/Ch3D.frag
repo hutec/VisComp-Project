@@ -24,6 +24,6 @@ vec3 lighting()
 }
 
 void main () {
-    color = vec4 (0.7 * lighting(), 1.0);
-    // color = vec4(1.0);
+    //color = vec4 (0.7 * lighting(), 1.0);
+    color = vec4(1.0, 1.0, 1.0, 0.3);
 }

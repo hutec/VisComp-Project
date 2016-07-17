@@ -7,6 +7,7 @@
 */
 
 #include <gtc/matrix_transform.hpp>
+//#include "glm/ext.hpp"
 #include "VCModels.h"
 
 VCModel::VCModel(const std::map<std::string, GLenum> &shaderPaths,
@@ -383,10 +384,10 @@ VCWVObjModel::setEnhancedTexture(const std::string& _texName)
 void
 VCWVObjModel::setLeapPosition(glm::vec3 pos)
 {
-	//TODO this is far from optimal, try to remap the hand positions
-	for (int i = 0; i < 3; ++i) {
+	//TODO this is far from optimal, try to remap the hand positions to OpenG Space
+	/*for (int i = 0; i < 3; ++i) {
 		pos[i] = std::max(0.f, std::min(std::abs(pos[i]), 255.f)) / 255.f;
-	}
+	}*/
 	m_leapPos = glm::vec4(pos.x, pos.y, pos.z, 1);
 }
 
@@ -508,7 +509,10 @@ VCCh3D::draw()
 
     glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
+    
+	//TODO disable, just on for having sphere indicate finger position
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     assert(glGetError() == GL_NONE);
 
@@ -520,6 +524,11 @@ VCCh3D::draw()
     glm::vec3 lightPos = glm::vec3(0.f, 1.f, 0.f) + ENV_VAR.camPos;
     glUniform3fv(m_uniformLocs["lightPos"], 1, &lightPos[0]);
 
+	glm::vec4 pos = mm * glm::vec4(ENV_VAR.camPos, 1.0);
+	//std::cout << "vsWorldPos: " << pos.x << ", " << pos.y << ", " << pos.z << std::endl;
+	//std::cout << "leapPos: " << m_leapPos.x << ", " << m_leapPos.y << ", " << m_leapPos.z << std::endl;
+
+
     for (auto grp : m_groups) {
         for (auto mtlGrp : grp->m_mtlGroups) {
             glBindVertexArray(mtlGrp->m_vao);
@@ -527,6 +536,8 @@ VCCh3D::draw()
             glDrawArrays(GL_TRIANGLES, 0, mtlGrp->m_numVert);
         }
     }
+
+	glDisable(GL_BLEND);
 
     assert(glGetError() == GL_NONE);
 }
