@@ -219,7 +219,7 @@ int main(const int argc, const char* argv[]) {
     skySphere->scale(glm::vec3(60));
 
 // #define HEAD_MODEL
-#define STICK_MODEL
+// #define STICK_MODEL
 // #define DOLL_MODEL
 
     _objPath = std::string("assets/head_full_tex.obj");
@@ -338,6 +338,10 @@ int main(const int argc, const char* argv[]) {
 		scaledPos += leapOffset;
 		//scaledPos.y -= leapHandDistance;
 
+		float leapRotationScale = 100000.f;
+		glm::vec3 scaledVel = glm::vec3(palmVelocity.x / leapRotationScale, palmVelocity.y / leapRotationScale, palmVelocity.z / leapRotationScale);
+		
+
 		/*pMesh->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
 		pMesh->rotate(glm::vec3(palmVelocity.x, palmVelocity.y, palmVelocity.z));
 		sphere->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
@@ -348,7 +352,7 @@ int main(const int argc, const char* argv[]) {
 		// update the scene
 		//pMesh->update(dt);
         //helloText->update(dt);
-        chH->update(dt);
+        //chH->update(dt);
         // sphereModel->update(dt); // no visual effect
         // headModel->update(dt);
         // stickModel->update(dt);
@@ -389,11 +393,15 @@ int main(const int argc, const char* argv[]) {
 			// Draw the mesh
             glDepthRange(0, 0.9);
             assert(glGetError() == GL_NONE);
-            //chH->draw();
+            
+
+			//chH->rotate(scaledVel.x, glm::vec3(0, 0, 1));
+			//chH->draw();
             // sphereSky->draw();
             skySphere->draw();
 #ifdef HEAD_MODEL
-            headModel->draw();
+			headModel->rotate(scaledVel.x, glm::vec3(0, 0, 1));
+			headModel->draw();
 #endif
 
 #ifdef STICK_MODEL
