@@ -219,7 +219,7 @@ int main(const int argc, const char* argv[]) {
     skySphere->scale(glm::vec3(60));
 
 // #define HEAD_MODEL
-// #define STICK_MODEL
+#define STICK_MODEL
 // #define DOLL_MODEL
 
     _objPath = std::string("assets/head_full_tex.obj");
@@ -235,16 +235,16 @@ int main(const int argc, const char* argv[]) {
     headModel->translate(glm::vec3(-3.f, 0.f, 0.f));
 #endif
 
-    _objPath = std::string("assets/stick_1_low.obj");
+    _objPath = std::string("assets/lochstab_smaller.obj");
 
 #ifdef STICK_MODEL
     stickModel = new VCPSModel(_objPath, _shaderPaths, _uniformNames, ".jpg");
 	std::string _epath{ "assets/stick_1_low_enhanced.jpg" };
 	stickModel->setEnhancedTexture(_epath);
     ENV_VAR.scene.push_back(stickModel);
-    stickModel->scale(glm::vec3(5.f));
-    stickModel->rotate(M_PI / 3.5f, glm::vec3(1.f, 0.f, 0.f));
-    stickModel->translate(glm::vec3(0.f, 0.f, -4.f));
+    stickModel->scale(glm::vec3(2.f));
+    stickModel->rotate(glm::radians(40.0f), glm::vec3(1.f, 0.f, 0.f));
+    stickModel->translate(glm::vec3(0.f, 0.5f, -0.5f));
 #endif
 
     _objPath = std::string("assets/doll.obj");
@@ -330,12 +330,12 @@ int main(const int argc, const char* argv[]) {
 		Leap::Vector palmPosition = getPalmPosition(controller.frame());
 
 		// used as origin for Leap coordinate system. 
-		glm::vec3 leapOffset = { 0.f, 0.f, -2.f }; //for Stick
+		glm::vec3 leapOffset = { 0.f, -1.5f, -5.f }; //for Stick
 		//glm::vec3 leapOffset = { 0.f, 3.f, -5.f };
 		float leapHandDistance = 100.f; //Added before scaling
 		float leapScale = 80.f; //the larger the scale, the slower the gesture
 		glm::vec3 scaledPos = glm::vec3(palmPosition.x / leapScale, ((palmPosition.y - leapHandDistance) / leapScale), palmPosition.z / leapScale);
-		scaledPos += leapOffset;
+		scaledPos += glm::vec3(Matrix4x4ToGLM(headToWorldMatrix) * glm::vec4(leapOffset, 1.0f));
 		//scaledPos.y -= leapHandDistance;
 
 		float leapRotationScale = 100000.f;
@@ -361,8 +361,8 @@ int main(const int argc, const char* argv[]) {
 		glm::vec4 viewDirWS = Matrix4x4ToGLM(headToWorldMatrix) * glm::vec4(0.0f, 0.0f, 100.0f, 1.0f);
 		//pMesh->alignToCamera(glm::vec3(viewDirWS.x, viewDirWS.y, viewDirWS.z), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::vec3 headPos(Matrix4x4ToGLM(headToWorldMatrix) * glm::vec4(0.f, 0.f, 0.f, 1.f));
-        glm::vec3 camUp(glm::vec4(0.f, 1.f, 0.f, 0.f));
-        helloText->alignToCamera(headPos, camUp);
+        glm::vec3 camUp(0.f, 1.f, 0.f);
+        helloText->alignToCamera(glm::vec3(viewDirWS), camUp);
 		// Draw the scene twice; for both eyes
         for (int eye = 0; eye < numEyes; ++eye) 
 		{

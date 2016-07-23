@@ -24,10 +24,18 @@ vec3 lighting()
     
 	vec3 texColor;
 	vec3 leap = vec3(leapPos.x, leapPos.y, leapPos.z);
+	
+	float dis = distance(leap, vsWorldPos);
 
-	if (distance(leap, vsWorldPos) < .2f) {
-	//if (abs(leapPos.x - vsWorldPos.x) < .5f && abs(leapPos.y - vsWorldPos.y) < .5f) {
+	if (dis < .4f) 
+	{
 		texColor = texture(enhancedTex, vsTexCoord).rgb;
+	} else if(dis < 0.6f)
+	{
+		vec3 c1 = texture(enhancedTex, vsTexCoord).rgb;
+		vec3 c2 = texture(diffuseTex, vsTexCoord).rgb;
+		// factor: 1 / 0.2 = 5
+		texColor = 5.0f*(dis - 0.4f) * c2 + (1-(dis-0.4)*5.0f) * c1;
 	} else {
 		texColor = texture(diffuseTex, vsTexCoord).rgb;
 	}
