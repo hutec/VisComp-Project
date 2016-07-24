@@ -521,7 +521,7 @@ VCCh3D::draw()
     glUniformMatrix4fv(m_uniformLocs["MVP"], 1, GL_FALSE, &mvp[0][0]);
     glUniformMatrix3fv(m_uniformLocs["normalMat"], 1, GL_FALSE, &nm[0][0]);
     glUniform3fv(m_uniformLocs["camPos"], 1, &ENV_VAR.camPos[0]);
-    glm::vec3 lightPos = glm::vec3(0.f, 1.f, 0.f) + ENV_VAR.camPos;
+    glm::vec3 lightPos = glm::vec3(0.f, 0.f, 0.f) + ENV_VAR.camPos;
     glUniform3fv(m_uniformLocs["lightPos"], 1, &lightPos[0]);
 
 	glm::vec4 pos = mm * glm::vec4(ENV_VAR.camPos, 1.0);
@@ -580,7 +580,7 @@ VCPSModel::draw()
     glUniformMatrix4fv(m_uniformLocs["MVP"], 1, GL_FALSE, &mvp[0][0]);
     glUniformMatrix3fv(m_uniformLocs["normalMat"], 1, GL_FALSE, &nm[0][0]);
     glUniform3fv(m_uniformLocs["camPos"], 1, &ENV_VAR.camPos[0]);
-    glm::vec3 lightPos = glm::vec3(0.f, 1.f, 0.f) + ENV_VAR.camPos;
+    glm::vec3 lightPos = glm::vec3(0.f, 0.f, 0.f) + ENV_VAR.camPos;
     glUniform3fv(m_uniformLocs["lightPos"], 1, &lightPos[0]);
 
 	glUniform4fv(m_uniformLocs["leapPos"], 1, &m_leapPos[0]);
