@@ -11,9 +11,5 @@ uniform vec4 leappos;
 out vec4 frag_colour;
 
 void main () {
-  if (texture(texture_enhanced, texcoords)[3] == 1.0) {
-	frag_colour = leappos;
-  } else {
-	frag_colour = texture(texture_enhanced, texcoords) * leappos;
-  }
+	frag_colour = texture(texture_enhanced, texcoords);
 }

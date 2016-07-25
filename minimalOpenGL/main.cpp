@@ -62,6 +62,7 @@
 #include "Leap.h"
 #include "LeapHandler.h"
 #include "VCModels.h"
+#include "helper\cPointToPointInterpolation.h"
 
 #ifdef _VR
 #   include "minimalOpenVR.h"
@@ -80,6 +81,7 @@ Sky *sky = nullptr;
 SphereSky *sphereSky = nullptr;
 // break the sphere at (-1, 0, 0), to make the seam gone
 SkySphere *skySphere = nullptr;
+cPointToPointInterpolation *cameraPath = nullptr;
 
 #ifdef _VR
     vr::IVRSystem* hmd = nullptr;
@@ -124,6 +126,8 @@ int main(const int argc, const char* argv[]) {
 	TwWindowSize(windowWidth, windowHeight);
 	// Initialize AntTweakBar
 	TwInit(TW_OPENGL_CORE, NULL);
+
+	cameraPath = new cPointToPointInterpolation();
 
 	double lastTime = glfwGetTime();
 	float dt = 0.0016f;
@@ -337,6 +341,14 @@ int main(const int argc, const char* argv[]) {
 
         // printf("float nearPlaneZ = %f, farPlaneZ = %f; int width = %d, height = %d;\n", nearPlaneZ, farPlaneZ, framebufferWidth, framebufferHeight);
 
+		if (cameraPath->interpolationActive())
+		{
+			glm::vec3 v = cameraPath->update(dt);
+			bodyTranslation = Vector3(v.x, v.y, v.z);
+		}
+
+		
+
         const Matrix4x4& bodyToWorldMatrix = 
             Matrix4x4::translate(bodyTranslation) *
             Matrix4x4::roll(bodyRotation.z) *
@@ -507,6 +519,11 @@ int main(const int argc, const char* argv[]) {
                 i->initShaderProg();
             }
         }
+		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F1)) { cameraPath->startLinearInterpolation(glm::vec3(bodyTranslation.x, bodyTranslation.y, bodyTranslation.z), glm::vec3(.0f, 3.0f, 2.0f), 2.0f); }
+		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F2)) { cameraPath->startLinearInterpolation(glm::vec3(bodyTranslation.x, bodyTranslation.y, bodyTranslation.z), glm::vec3(0.0f, 2.0f, 4.0f), 2.0f); }
+		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F3)) { cameraPath->startLinearInterpolation(glm::vec3(bodyTranslation.x, bodyTranslation.y, bodyTranslation.z), glm::vec3(0.3f, 0.0f, 4.0f), 2.0f); }
+		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F4)) { cameraPath->startLinearInterpolation(glm::vec3(bodyTranslation.x, bodyTranslation.y, bodyTranslation.z), glm::vec3(0.0f, 2.0f, -2.0f), 2.0f); }
+		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F6)) { cameraPath->startLinearInterpolation(glm::vec3(bodyTranslation.x, bodyTranslation.y, bodyTranslation.z), glm::vec3(5.0f, 1.5f, 1.0f), 2.0f); }
         if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F))) {
             ENV_VAR.FULL_BODY_ON = !ENV_VAR.FULL_BODY_ON;
             Sleep(200);
@@ -543,6 +560,7 @@ int main(const int argc, const char* argv[]) {
 #   endif
 
     delete sphereSky;
+	SAFE_DELETE(cameraPath);
 
 	// Terminate AntTweakBar and GLFW
 	TwTerminate();
