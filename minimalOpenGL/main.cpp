@@ -164,7 +164,7 @@ int main(const int argc, const char* argv[]) {
 	glfwSetKeyCallback(window, (GLFWkeyfun)TwEventKeyGLFW3);
 	glfwSetCharCallback(window, (GLFWcharfun)TwEventCharGLFW3);
 
-    ENV_VAR.FULL_BODY_ON = true;
+    ENV_VAR.FULL_BODY_ON = false;
 
     std::string _objPath{ "assets/quad.obj" };
     std::map<std::string, GLenum> _shaderPaths;
@@ -232,8 +232,8 @@ int main(const int argc, const char* argv[]) {
     bodyModel->scale(glm::vec3(5.f));
     // bodyModel->rotate(-M_PI / 2.f, glm::vec3(1.f, 0.f, 0.f));
 
- #define HEAD_MODEL
-// #define STICK_MODEL
+// #define HEAD_MODEL
+#define STICK_MODEL
 // #define DOLL_MODEL
 
     _objPath = std::string("assets/head.obj");
@@ -351,12 +351,13 @@ int main(const int argc, const char* argv[]) {
 		Leap::Vector palmPosition = getPalmPosition(controller.frame());
 
 		// used as origin for Leap coordinate system. 
-		glm::vec3 leapOffset = { 0.f, -1.5f, -5.f }; //for Stick
-		//glm::vec3 leapOffset = { 0.f, 3.f, -5.f };
+		glm::vec3 leapOffset = { 0.f, -1.5f, -5.f }; //relative to Head position
 		float leapHandDistance = 100.f; //Added before scaling
 		float leapScale = 80.f; //the larger the scale, the slower the gesture
-		glm::vec3 scaledPos = glm::vec3(palmPosition.x / leapScale, ((palmPosition.y - leapHandDistance) / leapScale), palmPosition.z / leapScale);
-		scaledPos += glm::vec3(Matrix4x4ToGLM(headToWorldMatrix) * glm::vec4(leapOffset, 1.0f));
+		//glm::vec3 scaledPos = glm::vec3(palmPosition.x / leapScale, ((palmPosition.y - leapHandDistance) / leapScale), palmPosition.z / leapScale);
+		leapOffset += glm::vec3(palmPosition.x / leapScale, ((palmPosition.y - leapHandDistance) / leapScale), palmPosition.z / leapScale);
+		glm::vec3 scaledPos = glm::vec3(Matrix4x4ToGLM(headToWorldMatrix) * glm::vec4(leapOffset, 1.0f));
+
 		//scaledPos.y -= leapHandDistance;
 
 		float leapRotationScale = 100000.f;
