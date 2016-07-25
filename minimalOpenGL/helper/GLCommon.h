@@ -16,6 +16,7 @@ struct EnvVar {
     glm::mat4 viewMat;
     glm::mat4 projMat;
     std::vector<VCModel *> scene;
+    bool FULL_BODY_ON;
 };
 
 extern EnvVar ENV_VAR;

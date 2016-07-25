@@ -68,12 +68,11 @@
 #endif
 
 GLFWwindow* window = nullptr;
-CMeshComponent* pMesh = nullptr;
-CMeshComponent* sphere = nullptr;
 
 VCText2D *helloText = nullptr;
 VCCh3D *chH = nullptr;
 VCCh3D *sphereModel = nullptr;
+VCCh3D *bodyModel = nullptr;
 VCPSModel *headModel = nullptr;
 VCPSModel *stickModel = nullptr;
 VCPSModel *dollModel = nullptr;
@@ -117,6 +116,7 @@ int main(const int argc, const char* argv[]) {
 
     const int windowHeight = 720;
     const int windowWidth = (framebufferWidth * windowHeight) / framebufferHeight;
+
 
     window = initOpenGL(windowWidth, windowHeight, "minimalOpenGL");
 
@@ -164,29 +164,17 @@ int main(const int argc, const char* argv[]) {
 	glfwSetKeyCallback(window, (GLFWkeyfun)TwEventKeyGLFW3);
 	glfwSetCharCallback(window, (GLFWcharfun)TwEventCharGLFW3);
 
-	pMesh = new CMeshComponent();
-	pMesh->init(
-		"assets/quad.obj",
-		"assets/hello.png", 
-		"shaders/simple_model.frag" , 
-		"shaders/simple_model.vert"
-		);
-
-	sphere = new CMeshComponent();
-	sphere->init(
-		"assets/sphere.obj",
-		"assets/generator_diffuse.jpg",
-		"shaders/simple_model.frag",
-		"shaders/simple_model.vert"
-	);
+    ENV_VAR.FULL_BODY_ON = true;
 
     std::string _objPath{ "assets/quad.obj" };
     std::map<std::string, GLenum> _shaderPaths;
     _shaderPaths["shaders/simple_model.vert"] = GL_VERTEX_SHADER;
     _shaderPaths["shaders/simple_model.frag"] = GL_FRAGMENT_SHADER;
-    std::vector<std::string> _uniformNames = { "MVP", "leappos" };
+    std::vector<std::string> _uniformNames = { "MVP", "leappos", "enhanced_texture" };
     std::string _texPath{ "assets/hello.png" };
+	std::string _secondaryTexPath{ "assets/hello_enhanced.png" };
     helloText = new VCText2D(_objPath, _shaderPaths, _uniformNames, _texPath);
+	helloText->setEnhancedTexture(_secondaryTexPath);
     ENV_VAR.scene.push_back(helloText);
     helloText->translate(glm::vec3(0.f, 3.f, 0.f));
 
@@ -213,7 +201,7 @@ int main(const int argc, const char* argv[]) {
     sphereModel = new VCCh3D(_objPath, _shaderPaths, _uniformNames);
     ENV_VAR.scene.push_back(sphereModel);
     sphereModel->translate(glm::vec3(3.f, 0.f, 1.f));
-
+	sphereModel->setScaleFactor(glm::vec3(0.1));
 
     ENV_VAR.envMap.load("assets/envMap.jpg");
     _shaderPaths.clear();
@@ -233,42 +221,62 @@ int main(const int argc, const char* argv[]) {
     ENV_VAR.scene.push_back(skySphere);
     skySphere->scale(glm::vec3(60));
 
-// #define HEAD_MODEL
+    _objPath = std::string("assets/body.obj");
+    _shaderPaths.clear();
+    _shaderPaths["shaders/body.vert"] = GL_VERTEX_SHADER;
+    _shaderPaths["shaders/body.frag"] = GL_FRAGMENT_SHADER;
+    _uniformNames = { "MVP", "ModelMat", "normalMat", "camPos", "lightPos",
+        "diffuse", "specular", "shininess" };
+    bodyModel = new VCCh3D(_objPath, _shaderPaths, _uniformNames);
+    ENV_VAR.scene.push_back(bodyModel);
+    bodyModel->scale(glm::vec3(5.f));
+    // bodyModel->rotate(-M_PI / 2.f, glm::vec3(1.f, 0.f, 0.f));
+
+ #define HEAD_MODEL
 // #define STICK_MODEL
 // #define DOLL_MODEL
 
-    _objPath = std::string("assets/head_full_tex.obj");
+    _objPath = std::string("assets/head.obj");
     _shaderPaths.clear();
-    _shaderPaths["shaders/ps_model.vert"] = GL_VERTEX_SHADER;
-    _shaderPaths["shaders/ps_model.frag"] = GL_FRAGMENT_SHADER;
-    _uniformNames = { "MVP", "ModelMat", "normalMat", "camPos", "lightPos" };
+    _shaderPaths["shaders/head.vert"] = GL_VERTEX_SHADER;
+    _shaderPaths["shaders/head.frag"] = GL_FRAGMENT_SHADER;
+    _uniformNames = { "MVP", "ModelMat", "normalMat", "camPos", "lightPos", "leapPos" };
 
 #ifdef HEAD_MODEL
     headModel = new VCPSModel(_objPath, _shaderPaths, _uniformNames, ".png");
     ENV_VAR.scene.push_back(headModel);
-    headModel->scale(glm::vec3(5.f));
-    headModel->translate(glm::vec3(-3.f, 0.f, 0.f));
+    headModel->scale(glm::vec3(0.5f));
+    headModel->translate(glm::vec3(0.f, 6.35f, 0.f));
+    // headModel->scale(glm::vec3(2.f));
+    // headModel->rotate(-M_PI / 2.f, glm::vec3(1.f, 0.f, 0.f));
 #endif
-
-    _objPath = std::string("assets/stick_1_low.obj");
-
-#ifdef STICK_MODEL
-    stickModel = new VCPSModel(_objPath, _shaderPaths, _uniformNames, ".jpg");
-    ENV_VAR.scene.push_back(stickModel);
-    stickModel->scale(glm::vec3(5.f));
-    stickModel->rotate(M_PI / 3.5f, glm::vec3(1.f, 0.f, 0.f));
-    stickModel->translate(glm::vec3(0.f, 0.f, -4.f));
-#endif
-
-    _objPath = std::string("assets/doll.obj");
 
 #ifdef DOLL_MODEL
+    _objPath = std::string("assets/doll.obj");
     dollModel = new VCPSModel(_objPath, _shaderPaths, _uniformNames, ".jpg");
     ENV_VAR.scene.push_back(dollModel);
     dollModel->scale(glm::vec3(5.f));
     dollModel->translate(glm::vec3(1.f, 2.f, 0.f));
     dollModel->rotate(-M_PI, glm::vec3(1.f, 0.f, 0.f));
 #endif
+
+#ifdef STICK_MODEL
+    _objPath = std::string("assets/lochstab_smaller.obj");
+    _shaderPaths.clear();
+    _shaderPaths["shaders/ps_model.vert"] = GL_VERTEX_SHADER;
+    _shaderPaths["shaders/ps_model.frag"] = GL_FRAGMENT_SHADER;
+    stickModel = new VCPSModel(_objPath, _shaderPaths, _uniformNames, ".jpg");
+	std::string _epath{ "assets/stick_1_low_enhanced.jpg" };
+	stickModel->setEnhancedTexture(_epath);
+    ENV_VAR.scene.push_back(stickModel);
+    stickModel->scale(glm::vec3(2.f));
+    stickModel->rotate(glm::radians(40.0f), glm::vec3(1.f, 0.f, 0.f));
+    stickModel->translate(glm::vec3(0.f, 0.5f, -0.5f));
+#endif
+
+    
+
+
 
     Vector3 bodyTranslation(0.0f, 1.6f, 5.0f);
     Vector3 bodyRotation;
@@ -338,31 +346,44 @@ int main(const int argc, const char* argv[]) {
         const Matrix4x4& headToWorldMatrix = bodyToWorldMatrix * headToBodyMatrix;
 
 
-		//Leap::Vector palmVelocity = getPalmVelocity(controller.frame());
-		//pMesh->rotate(glm::vec3(palmVelocity.x, palmVelocity.y, palmVelocity.z));
 
+		Leap::Vector palmVelocity = getPalmVelocity(controller.frame());
 		Leap::Vector palmPosition = getPalmPosition(controller.frame());
-		pMesh->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
+
+		// used as origin for Leap coordinate system. 
+		glm::vec3 leapOffset = { 0.f, -1.5f, -5.f }; //for Stick
+		//glm::vec3 leapOffset = { 0.f, 3.f, -5.f };
+		float leapHandDistance = 100.f; //Added before scaling
+		float leapScale = 80.f; //the larger the scale, the slower the gesture
+		glm::vec3 scaledPos = glm::vec3(palmPosition.x / leapScale, ((palmPosition.y - leapHandDistance) / leapScale), palmPosition.z / leapScale);
+		scaledPos += glm::vec3(Matrix4x4ToGLM(headToWorldMatrix) * glm::vec4(leapOffset, 1.0f));
+		//scaledPos.y -= leapHandDistance;
+
+		float leapRotationScale = 100000.f;
+		glm::vec3 scaledVel = glm::vec3(palmVelocity.x / leapRotationScale, palmVelocity.y / leapRotationScale, palmVelocity.z / leapRotationScale);
 		
+
+		/*pMesh->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
+		pMesh->rotate(glm::vec3(palmVelocity.x, palmVelocity.y, palmVelocity.z));
 		sphere->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
-		sphere->moveTo(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
+		sphere->moveTo(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));*/
 
 
-        helloText->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
+       // helloText->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
 		// update the scene
 		//pMesh->update(dt);
         //helloText->update(dt);
-        chH->update(dt);
+        //chH->update(dt);
         // sphereModel->update(dt); // no visual effect
         // headModel->update(dt);
         // stickModel->update(dt);
         // dollModel->update(dt);
 
 		glm::vec4 viewDirWS = Matrix4x4ToGLM(headToWorldMatrix) * glm::vec4(0.0f, 0.0f, 100.0f, 1.0f);
-		pMesh->alignToCamera(glm::vec3(viewDirWS.x, viewDirWS.y, viewDirWS.z), glm::vec3(0.0f, 1.0f, 0.0f));
+		//pMesh->alignToCamera(glm::vec3(viewDirWS.x, viewDirWS.y, viewDirWS.z), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::vec3 headPos(Matrix4x4ToGLM(headToWorldMatrix) * glm::vec4(0.f, 0.f, 0.f, 1.f));
-        glm::vec3 camUp(glm::vec4(0.f, 1.f, 0.f, 0.f));
-        helloText->alignToCamera(headPos, camUp);
+        glm::vec3 camUp(0.f, 1.f, 0.f);
+        helloText->alignToCamera(glm::vec3(viewDirWS), camUp);
 		// Draw the scene twice; for both eyes
         for (int eye = 0; eye < numEyes; ++eye) 
 		{
@@ -393,16 +414,23 @@ int main(const int argc, const char* argv[]) {
 			// Draw the mesh
             glDepthRange(0, 0.9);
             assert(glGetError() == GL_NONE);
-            sphere->render(viewProjectionMatrix);
+            
 
-            chH->draw();
+			//chH->rotate(scaledVel.x, glm::vec3(0, 0, 1));
+			//chH->draw();
             // sphereSky->draw();
             skySphere->draw();
 #ifdef HEAD_MODEL
-            headModel->draw();
+			headModel->rotate(scaledVel.x, glm::vec3(0, 0, 1));
+			headModel->draw();
+            
 #endif
-
+            if (ENV_VAR.FULL_BODY_ON) {
+                bodyModel->draw();
+            }
 #ifdef STICK_MODEL
+			//stickModel->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
+			stickModel->setLeapPosition(scaledPos);
             stickModel->draw();
 #endif
 
@@ -410,6 +438,11 @@ int main(const int argc, const char* argv[]) {
             dollModel->draw();
 #endif
 
+
+
+
+			//sphereModel->setLeapPosition(glm::vec3(palmPosition.x, palmPosition.y, palmPosition.z));
+			sphereModel->setTranslation(scaledPos);
             sphereModel->draw();
 
             assert(glGetError() == GL_NONE);
@@ -422,7 +455,6 @@ int main(const int argc, const char* argv[]) {
             glDepthRange(0.0, 0.9);
             // transparent objects should be draw at last, from back to front
             helloText->draw();
-            pMesh->render(viewProjectionMatrix);
             glDepthRange(0.0, 1.0);
 
 			// Draw the Anttweakbar UI
@@ -474,6 +506,10 @@ int main(const int argc, const char* argv[]) {
                 i->initShaderProg();
             }
         }
+        if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F))) {
+            ENV_VAR.FULL_BODY_ON = !ENV_VAR.FULL_BODY_ON;
+            Sleep(200);
+        }
         // Keep the camera above the ground
         if (bodyTranslation.y < 0.01f) { bodyTranslation.y = 0.01f; }
 
@@ -504,13 +540,6 @@ int main(const int argc, const char* argv[]) {
             vr::VR_Shutdown();
         }
 #   endif
-
-	// Relesee the vertex buffers, shader and textures
-	pMesh->cleanup();
-	SAFE_DELETE(pMesh);
-
-	sphere->cleanup();
-	SAFE_DELETE(sphere);
 
     delete sphereSky;
 
