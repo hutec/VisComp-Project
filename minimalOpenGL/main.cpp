@@ -176,11 +176,12 @@ int main(const int argc, const char* argv[]) {
     _shaderPaths["shaders/simple_model.frag"] = GL_FRAGMENT_SHADER;
     std::vector<std::string> _uniformNames = { "MVP", "leappos", "enhanced_texture" };
     std::string _texPath{ "assets/hello.png" };
-	std::string _secondaryTexPath{ "assets/hello_enhanced.png" };
+	std::string _secondaryTexPath{ "assets/hello.png" };
     helloText = new VCText2D(_objPath, _shaderPaths, _uniformNames, _texPath);
 	helloText->setEnhancedTexture(_secondaryTexPath);
     ENV_VAR.scene.push_back(helloText);
-    helloText->translate(glm::vec3(0.f, 3.f, 0.f));
+    helloText->translate(glm::vec3(0.f, 3.f, -4.f));
+	helloText->setScaleFactor(glm::vec3(1.5f));
 
     _shaderPaths.clear();
     _shaderPaths["shaders/sky.vert"] = GL_VERTEX_SHADER;
@@ -524,6 +525,7 @@ int main(const int argc, const char* argv[]) {
 		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F3)) { cameraPath->startLinearInterpolation(glm::vec3(bodyTranslation.x, bodyTranslation.y, bodyTranslation.z), glm::vec3(0.3f, 0.0f, 4.0f), 2.0f); }
 		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F4)) { cameraPath->startLinearInterpolation(glm::vec3(bodyTranslation.x, bodyTranslation.y, bodyTranslation.z), glm::vec3(0.0f, 2.0f, -2.0f), 2.0f); }
 		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F6)) { cameraPath->startLinearInterpolation(glm::vec3(bodyTranslation.x, bodyTranslation.y, bodyTranslation.z), glm::vec3(5.0f, 1.5f, 1.0f), 2.0f); }
+		if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F7)) { cameraPath->startLinearInterpolation(glm::vec3(bodyTranslation.x, bodyTranslation.y, bodyTranslation.z), glm::vec3(0.0f, 1.6f, 5.0f), 2.0f); }
         if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_F))) {
             ENV_VAR.FULL_BODY_ON = !ENV_VAR.FULL_BODY_ON;
             Sleep(200);
